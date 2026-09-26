@@ -112,6 +112,9 @@ The status labels are in German. This is what they mean:
 . The VM gets an IP address, it is posted as a comment in the issue — label `status: ip-vergeben` (IP assigned).
 . The VM is created — label `status: erstellt` (created), you get a message in the issue. The access credentials come through a separate channel.
 
+If your request is rejected, you get the reason as a comment and the issue is closed
+(label `abgelehnt` = rejected). You can then submit a new, corrected request.
+
 Ask questions as a comment directly in your issue — English is fine.
 
 == When you no longer need the VM

@@ -110,6 +110,9 @@ link:https://github.com/htl-leonding-college/keycloak-antraege[keycloak-antraege
 . Die VM bekommt eine IP-Adresse, sie steht als Kommentar im Issue — Label `status: ip-vergeben`.
 . Die VM wird angelegt — Label `status: erstellt`, ihr bekommt eine Nachricht im Issue. Die Zugangsdaten kommen auf einem anderen Weg.
 
+Wird euer Antrag abgelehnt, bekommt ihr die Begründung als Kommentar und das Issue wird
+geschlossen (Label `abgelehnt`). Ihr könnt dann einen neuen, korrigierten Antrag stellen.
+
 Fragen stellt ihr als Kommentar direkt in eurem Issue.
 
 == Wenn ihr die VM nicht mehr braucht

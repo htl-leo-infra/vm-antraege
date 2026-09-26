@@ -1,0 +1,62 @@
+name: Status
+
+# Reagiert auf Status-Labels, die Admins manuell setzen.
+# Labels, die der Bot selbst setzt (GITHUB_TOKEN), lösen diesen Workflow nicht aus.
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: antrag-${{ github.event.issue.number }}
+
+jobs:
+  status:
+    if: >-
+      contains(github.event.issue.labels.*.name, 'vm-antrag') &&
+      contains(fromJSON('["status: freigegeben", "status: erstellt", "abgelehnt"]'), github.event.label.name)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - uses: actions/github-script@v9
+        env:
+          IP_VERGABE: ${{ vars.IP_VERGABE || 'htl-leonding' }}
+        with:
+          script: |
+            const a = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/antrag.js`);
+            const issue = context.payload.issue;
+            const nr = issue.number;
+            const en = a.isEnglish(issue);
+            const f = a.parseBody(issue.body);
+
+            switch (context.payload.label.name) {
+              case a.LABEL.freigegeben:
+                await a.removeLabel(github, context, nr, a.LABEL.neu);
+                await a.comment(github, context, nr,
+                  `${a.mention(process.env.IP_VERGABE)} Antrag \`${f.projektname}\` wurde von @${context.actor} freigegeben. ` +
+                  'Bitte IP-Adresse eintragen mit einem Kommentar:\n\n```\n/ip 10.x.x.x\n```\n\n' +
+                  (en ? 'Your request has been approved. Next, your VM will get an IP address.'
+                      : 'Euer Antrag wurde freigegeben. Als Nächstes bekommt eure VM eine IP-Adresse.'));
+                break;
+
+              case a.LABEL.erstellt:
+                await a.removeLabel(github, context, nr, a.LABEL.ipVergeben);
+                await a.comment(github, context, nr, `@${issue.user.login} ` + (en
+                  ? `🎉 Your VM \`${f.projektname}\` is ready. You will receive the access credentials through a separate channel – never post them here.\n\n` +
+                    'When you no longer need the VM, just write a comment here.'
+                  : `🎉 Eure VM \`${f.projektname}\` ist bereit. Die Zugangsdaten bekommt ihr auf einem anderen Weg – bitte niemals hier posten.\n\n` +
+                    'Wenn ihr die VM nicht mehr braucht, schreibt einfach einen Kommentar hier.'));
+                break;
+
+              case a.LABEL.abgelehnt:
+                // Rückfall: nur Label gesetzt, Begründung steht (hoffentlich) in einem Kommentar
+                await a.reject(github, context, issue, context.actor, null, process.env.IP_VERGABE);
+                break;
+            }

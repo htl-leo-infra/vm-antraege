@@ -21,11 +21,12 @@ Lies zuerst `CLAUDE.md` und `docs/anforderungen.md`.
 - Labels: `vm-antrag`, `english`, `status: neu|freigegeben|ip-vergeben|erstellt`, `abgelehnt`, `ungültig`
 - Workflows (`.github/workflows/`), Logik in `.github/scripts/antrag.js`:
   - `antrag-pruefen.yaml` – Titel setzen, validieren (Name, Eindeutigkeit, Ports/DNS bei Internet „Yes“), `ungültig` bzw. `status: neu` + @FREIGABE
-  - `freigabe.yaml` – bei `status: freigegeben` → @IP_VERGABE
-  - `ip-eintragen.yaml` – `/ip x.x.x.x` (nur Triage+) → `status: ip-vergeben` + Zusammenfassung an @VM_ERSTELLUNG
-  - `erstellt.yaml` – bei `status: erstellt` → Nachricht an Antragsteller*in
+  - `status.yaml` – Label `status: freigegeben` → @IP_VERGABE · `status: erstellt` → Nachricht an Antragsteller*in · `abgelehnt` → Ablehnung ohne Begründung (Rückfall)
+  - `kommandos.yaml` – nur Triage+: `/ip x.x.x.x` → `status: ip-vergeben` + Zusammenfassung an @VM_ERSTELLUNG · `/ablehnen <Begründung>` → Ablehnung mit Begründung
+  - Ablehnung (`reject()` in `antrag.js`): Status-Labels weg, `abgelehnt`, Kommentar, schließen (not planned); bei `ip-vergeben` @IP_VERGABE; bei `erstellt` nur Hinweis, nicht schließen
 - Repo-Variablen (optional, Defaults im Workflow): `FREIGABE`=bauepete, `IP_VERGABE`=htl-leonding (Platzhalter), `VM_ERSTELLUNG`=`MWagnerOE5AOO Master-Andi`
 - End-to-End-Test bestanden (Issues #1, #2, geschlossen „not planned“); Test-Variablen gelöscht
+- Workflows zusammengelegt (freigabe/erstellt/ip-eintragen → status + kommandos), `/ablehnen` ergänzt – **Ablehnung noch nicht end-to-end getestet**
 - Actions: `checkout@v7`, `github-script@v9`
 
 ## Nächste Schritte
@@ -48,10 +49,8 @@ gh api -X PATCH orgs/htl-leo-infra -F members_can_create_repositories=false
 
 ### Weitere offene Punkte
 - GitHub-Username Thomas Himmelbauer → einladen + `gh variable set IP_VERGABE -R htl-leo-infra/vm-antraege --body <user>`
-- Workflow für Label `abgelehnt` (Kommentar + Issue schließen)
 - Hinweis an Admins, wenn Antrag nach Freigabe (Status ≥ `freigegeben`) bearbeitet wird – in `antrag-pruefen.yaml`
-- Optional: übersprungene Label-Workflow-Läufe reduzieren (Freigabe/Erstellt in einen Workflow `status.yaml` zusammenlegen)
-- Nicht getestet: `/ip` von Nicht-Admin wird ignoriert (braucht zweiten Account)
+- Nicht getestet: `/ip`/`/ablehnen` von Nicht-Admin wird ignoriert (braucht zweiten Account)
 - Stufen CPU/RAM/Disk mit Michael Wagner abstimmen
 - „Löschen nach Nutzungsdauer“ (Leitfaden) mit Michael abstimmen
 - Echter Mailverteiler später (Office365 via Graph API, Funktionspostfach, Schul-IT)

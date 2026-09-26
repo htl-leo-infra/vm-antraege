@@ -28,6 +28,9 @@ Team `vm-admins` (Rolle Triage): alle obigen. Schüler*innen bearbeiten nur eige
 3. Peter setzt `status: freigegeben` → Workflow erwähnt Himmelbauer
 4. Himmelbauer kommentiert `/ip <adresse>` → `status: ip-vergeben` + @MWagnerOE5AOO @Master-Andi
 5. VM angelegt → Label `status: erstellt` → Workflow informiert Antragsteller*in
+6. Jederzeit vor „erstellt“: `/ablehnen <Begründung>` (oder nur Label `abgelehnt` als Rückfall) → Status-Labels weg, `abgelehnt`, Kommentar, Issue geschlossen
+
+Workflows: `antrag-pruefen.yaml` (opened/edited), `status.yaml` (labeled), `kommandos.yaml` (`/ip`, `/ablehnen`).
 
 Benachrichtigung ausschließlich per @-Mention (GitHub-Mail), einzelne Personen, kein Team-Mention. SMTP/Graph-API evtl. später.
 

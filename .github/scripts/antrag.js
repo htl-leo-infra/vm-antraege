@@ -162,7 +162,53 @@ async function upsertComment(github, context, number, marker, body, onlyIfExists
   }
 }
 
+// Nur Triage oder höher darf Kommandos ausführen.
+async function hasTriage(github, context, username) {
+  try {
+    const { data } = await github.rest.repos.getCollaboratorPermissionLevel({ ...context.repo, username });
+    return ['triage', 'write', 'maintain', 'admin'].includes(data.role_name);
+  } catch (e) {
+    if (e.status === 404) return false;
+    throw e;
+  }
+}
+
+// Antrag ablehnen: Status-Labels weg, Label abgelehnt, Kommentar, Issue schließen.
+// reason: Begründung aus /ablehnen, oder null (nur Label gesetzt → Verweis auf Kommentare).
+// ipVergabe: wird erwähnt, falls die IP schon vergeben war.
+async function reject(github, context, issue, actor, reason, ipVergabe) {
+  const nr = issue.number;
+  const labels = labelNames(issue);
+  const f = parseBody(issue.body);
+  const t = (de, e) => (isEnglish(issue) ? e : de);
+
+  if (labels.includes(LABEL.erstellt)) {
+    await comment(github, context, nr,
+      `⚠️ Antrag \`${f.projektname}\` soll abgelehnt werden, die VM existiert aber bereits (\`${LABEL.erstellt}\`). ` +
+      'Bitte die VM zuerst in Proxmox löschen und das Issue danach manuell schließen.');
+    return;
+  }
+
+  const hadIp = labels.includes(LABEL.ipVergeben);
+  for (const l of [LABEL.neu, LABEL.freigegeben, LABEL.ipVergeben]) {
+    if (labels.includes(l)) await removeLabel(github, context, nr, l);
+  }
+  if (!labels.includes(LABEL.abgelehnt)) await addLabels(github, context, nr, [LABEL.abgelehnt]);
+
+  const why = reason
+    ? t(`**Begründung:** ${reason}`, `**Reason:** ${reason}`)
+    : t('Die Begründung findet ihr in den Kommentaren oben.', 'You can find the reason in the comments above.');
+  let body = `@${issue.user.login} ` + t(
+    `❌ Euer Antrag wurde von @${actor} abgelehnt.\n\n${why}\n\nIhr könnt gerne einen neuen, korrigierten Antrag stellen.`,
+    `❌ Your request was rejected by @${actor}.\n\n${why}\n\nFeel free to submit a new, corrected request.`);
+  if (hadIp) {
+    body += `\n\n---\n\n${mention(ipVergabe)} Für \`${f.projektname}\` war bereits eine IP-Adresse vergeben – bitte wieder freigeben.`;
+  }
+  await comment(github, context, nr, body);
+  await github.rest.issues.update({ ...context.repo, issue_number: nr, state: 'closed', state_reason: 'not_planned' });
+}
+
 module.exports = {
   LABEL, STATUS_LABELS, parseBody, labelNames, isEnglish, wantsInternet, mention, isIPv4,
-  validate, summary, removeLabel, addLabels, comment, upsertComment,
+  validate, summary, removeLabel, addLabels, comment, upsertComment, hasTriage, reject,
 };

@@ -38,16 +38,13 @@ Setzt der Bot z.B. `status: neu`, reagiert kein anderer Workflow darauf.
 |`antrag-pruefen.yaml` („Antrag prüfen")
 |Label `vm-antrag` und Issue offen
 
-.2+|Label hinzugefügt
-|`freigabe.yaml` („Freigabe")
-|Label = `status: freigegeben`
-
-|`erstellt.yaml` („VM erstellt")
-|Label = `status: erstellt`
+|Label hinzugefügt
+|`status.yaml` („Status")
+|Label `vm-antrag` und Label = `status: freigegeben`, `status: erstellt` oder `abgelehnt`
 
 |Kommentar geschrieben
-|`ip-eintragen.yaml` („IP eintragen")
-|beginnt mit `/ip`, Label `vm-antrag`
+|`kommandos.yaml` („Kommandos")
+|beginnt mit `/ip` oder `/ablehnen`, Label `vm-antrag`
 |===
 
 .Status-Kette
@@ -55,7 +52,18 @@ Setzt der Bot z.B. `status: neu`, reagiert kein anderer Workflow darauf.
 ----
 (Antrag) ──► ungültig ◄──► status: neu ──► status: freigegeben ──► status: ip-vergeben ──► status: erstellt
               Bot            Bot            Peter (Label)          Himmelbauer (/ip)        Wagner/Brückner (Label)
+
+Jederzeit vor „erstellt":  /ablehnen <Begründung>  oder Label abgelehnt  ──► abgelehnt + Issue geschlossen
 ----
+
+.Kommandos (nur Rolle Triage oder höher)
+[cols="2,3",options="header"]
+|===
+|Kommando |Wirkung
+
+|`/ip <adresse>` |IP eintragen, nur bei `status: freigegeben` (<<ip>>)
+|`/ablehnen <Begründung>` |Antrag ablehnen und schließen (<<ablehnen>>)
+|===
 
 [[personen]]
 === Zuständige Personen
@@ -119,15 +127,15 @@ automatisch setzt. Texte an Schüler*innen sind dann englisch, Texte an Admins i
 *Aktion:* Peter setzt das Label `status: freigegeben` (braucht Rolle Triage, d.h. Mitglied
 im Team `vm-admins`).
 
-*Ereignis:* `issues: labeled` → Workflow *Freigabe*
+*Ereignis:* `issues: labeled` → Workflow *Status* (Zweig `status: freigegeben`)
 
 . Label `status: neu` entfernen.
 . Kommentar: `@<IP_VERGABE> Antrag … wurde von @bauepete freigegeben. Bitte /ip 10.x.x.x`
   und für die Schüler*innen „Euer Antrag wurde freigegeben".
 . *Die Person für die IP-Vergabe bekommt eine Mail.*
 
-NOTE: Gleichzeitig startet auch *VM erstellt* (ebenfalls ein Label-Ereignis), wird aber
-übersprungen, weil das Label nicht `status: erstellt` ist.
+NOTE: Der Workflow *Status* startet bei jedem Label, läuft aber nur bei `status: freigegeben`,
+`status: erstellt` und `abgelehnt`. Alle anderen Labels werden übersprungen.
 
 [[ip]]
 == Himmelbauer trägt die IP ein
@@ -139,7 +147,7 @@ NOTE: Gleichzeitig startet auch *VM erstellt* (ebenfalls ein Label-Ereignis), wi
 /ip 10.0.0.99
 ----
 
-*Ereignis:* `issue_comment: created` → Workflow *IP eintragen*
+*Ereignis:* `issue_comment: created` → Workflow *Kommandos* (Zweig `/ip`)
 
 . *Berechtigung prüfen* — Rolle der kommentierenden Person im Repo abfragen. Unter Triage
   (z.B. Schüler*innen): nur Log-Eintrag, *kein sichtbarer Kommentar*.
@@ -160,13 +168,55 @@ NOTE: Gleichzeitig startet auch *VM erstellt* (ebenfalls ein Label-Ereignis), wi
 
 *Aktion:* VM in Proxmox anlegen (manuell), danach Label `status: erstellt` setzen.
 
-*Ereignis:* `issues: labeled` → Workflow *VM erstellt*
+*Ereignis:* `issues: labeled` → Workflow *Status* (Zweig `status: erstellt`)
 
 . Label `status: ip-vergeben` entfernen.
 . Kommentar `@<antragsteller*in> 🎉 Eure VM … ist bereit. Zugangsdaten auf anderem Weg …`
 . *Die Antragsteller*in bekommt eine Mail.*
 
 WARNING: Zugangsdaten zur VM niemals im Issue posten — das Repo ist öffentlich.
+
+[[ablehnen]]
+== Antrag ablehnen
+
+Jede Person mit Rolle Triage kann einen Antrag ablehnen — jederzeit, solange die VM noch
+nicht erstellt ist.
+
+=== Empfohlen: Kommando mit Begründung
+
+[source,text]
+----
+/ablehnen Port 22 darf nicht öffentlich sein. Bitte Zugriff über VPN.
+----
+
+*Ereignis:* `issue_comment: created` → Workflow *Kommandos* (Zweig `/ablehnen`)
+
+. *Berechtigung prüfen* — wie bei `/ip`. Ohne Triage: still ignoriert.
+. *Bereits abgelehnt?* — 😕 und Hinweis „bereits abgelehnt".
+. *Begründung Pflicht* — `/ablehnen` ohne Text: 😕 und Hinweis `/ablehnen <Begründung>`.
+  Die Begründung ist alles nach `/ablehnen`, auch mehrzeilig.
+. 👍-Reaktion, dann Ablehnung (siehe unten).
+
+=== Rückfall: nur Label `abgelehnt`
+
+Setzt ein Admin nur das Label, läuft der Workflow *Status* (Zweig `abgelehnt`) mit derselben
+Ablehnung, aber ohne Begründung. Der Kommentar verweist dann auf „die Begründung in den
+Kommentaren oben" — der Admin sollte sie vorher selbst schreiben.
+
+=== Was bei der Ablehnung passiert
+
+. *VM existiert schon* (`status: erstellt`): *nichts wird geschlossen*. Nur Hinweis an die
+  Admins: VM zuerst in Proxmox löschen, dann Issue manuell schließen.
+. Status-Labels `status: neu` / `status: freigegeben` / `status: ip-vergeben` entfernen,
+  Label `abgelehnt` setzen (falls noch nicht gesetzt).
+. Kommentar an die Antragsteller*in (DE/EN): „❌ Euer Antrag wurde von @… abgelehnt" +
+  Begründung + „Ihr könnt gerne einen neuen, korrigierten Antrag stellen."
+. *War die IP schon vergeben* (`status: ip-vergeben`): zusätzlich Erwähnung von
+  `IP_VERGABE`, damit die IP wieder freigegeben wird.
+. Issue schließen als „not planned" — der Projektname wird wieder frei.
+
+NOTE: Setzt `/ablehnen` das Label `abgelehnt`, löst das den Workflow *Status* nicht erneut aus
+(Bot-Änderung mit `GITHUB_TOKEN`). Es gibt also keinen doppelten Kommentar.
 
 [[ohne-workflow]]
 == Aktionen ohne Workflow
@@ -177,9 +227,6 @@ WARNING: Zugangsdaten zur VM niemals im Issue posten — das Repo ist öffentlic
 
 |Normaler Kommentar (Frage, „brauchen VM nicht mehr")
 |Nichts. GitHub benachrichtigt nur Beobachter*innen des Issues und Erwähnte.
-
-|Label `abgelehnt`
-|*Nichts* — kein Kommentar, Issue bleibt offen. Admins kommentieren und schließen selbst.
 
 |Issue schließen
 |Nichts. Der Projektname wird dadurch wieder frei.
@@ -218,8 +265,7 @@ nicht fälschen.
 . *Parsing über Überschriften* — Enthält ein Textfeld eine Zeile mit `### …`, wird der Wert
   abgeschnitten. Selten und harmlos.
 . *Team nötig* — Ohne Team `vm-admins` (Rolle Triage) können die Admins weder Labels setzen
-  noch `/ip` verwenden.
-. *`abgelehnt` nicht automatisiert* — geplant: Kommentar und Issue schließen.
+  noch `/ip` bzw. `/ablehnen` verwenden.
 
 [[test]]
 == Testen
