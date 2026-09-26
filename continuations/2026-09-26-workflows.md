@@ -20,9 +20,23 @@ Lies zuerst `CLAUDE.md` und `docs/anforderungen.md`.
 
 ## Nächste Schritte
 
-### Schritt 4: Team `vm-admins`
-- Team anlegen (privacy closed), Repo-Rolle **triage** auf `vm-antraege`
-- Mitglieder einladen: `bauepete`, `MWagnerOE5AOO`, `Master-Andi` (+ Himmelbauer, sobald Username bekannt)
+### Schritt 4: Team `vm-admins` – ⏸ ZURÜCKGESTELLT (auf mein Signal warten)
+Befehle vorbereitet, **noch nicht ausführen**:
+```bash
+# a) Team anlegen
+gh api -X POST orgs/htl-leo-infra/teams -f name=vm-admins -f privacy=closed -f description="Bearbeitung der VM-Anträge"
+# b) Rolle Triage auf vm-antraege
+gh api -X PUT orgs/htl-leo-infra/teams/vm-admins/repos/htl-leo-infra/vm-antraege -f permission=triage
+# c) Mitglieder einladen (verschickt Einladungs-Mails!)
+gh api -X PUT orgs/htl-leo-infra/teams/vm-admins/memberships/bauepete -f role=member
+gh api -X PUT orgs/htl-leo-infra/teams/vm-admins/memberships/MWagnerOE5AOO -f role=member
+gh api -X PUT orgs/htl-leo-infra/teams/vm-admins/memberships/Master-Andi -f role=member
+# d) optional: Mitglieder dürfen keine Repos in der Org anlegen – noch nicht entschieden
+gh api -X PATCH orgs/htl-leo-infra -F members_can_create_repositories=false
+```
+- Himmelbauer einladen, sobald Username bekannt
+- Stand 26.09.: nur `htl-leonding` Mitglied, keine Teams, keine Einladungen
+- Workflows (Schritt 5) funktionieren auch ohne Team: @-Mentions erreichen auch Nicht-Mitglieder, die `/ip`-Berechtigungsprüfung braucht aber Triage → Test vorerst mit `htl-leonding`
 
 ### Schritt 5: Workflows `.github/workflows/*.yaml`
 | Datei | Trigger | Aktion |
@@ -32,6 +46,7 @@ Lies zuerst `CLAUDE.md` und `docs/anforderungen.md`.
 | `ip-eintragen.yaml` | `issue_comment: created`, beginnt mit `/ip` | Berechtigung (`collaborators/{user}/permission` ≥ triage) + IPv4 prüfen → `status: freigegeben` → `status: ip-vergeben`, Kommentar mit Zusammenfassung aller Felder + IP und @MWagnerOE5AOO @Master-Andi. Nicht-Admins ignorieren |
 | `erstellt.yaml` | `issues: labeled` = `status: erstellt` | `status: ip-vergeben` entfernen, Kommentar an Antragsteller*in „VM ist bereit“ |
 
+- `antrag-pruefen.yaml` setzt Titel automatisch auf `[VM] <projektname>` (Wert aus Feld Projektname)
 - `actions/github-script` zum Parsen des Issue-Form-Bodys (`### <Label>\n\n<Wert>`), Feld-Labels siehe `vm-antrag.yaml`
 - Minimale `permissions` (`issues: write`, `contents: read`)
 - Danach End-to-End-Test mit Test-Issues (ungültiger Name, gültiger Antrag, Freigabe, `/ip` von Admin und Nicht-Admin), Test-Issues schließen

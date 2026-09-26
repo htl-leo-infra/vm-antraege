@@ -1,6 +1,6 @@
 name: VM oder LXC für ein Projekt beantragen
 description: Virtuelle Maschine oder Container in der Proxmox-Umgebung der Schule anfordern
-title: "[VM] <Projektname>"
+title: "[VM] <projektname>"
 labels: ["vm-antrag"]
 body:
   - type: markdown
@@ -15,7 +15,7 @@ body:
     id: projektname
     attributes:
       label: Projektname
-      description: Klein geschrieben, ohne Leerzeichen. Wird Teil des VM Namens. Erlaubt sind a–z, 0–9 und `-`.
+      description: Klein geschrieben, ohne Leerzeichen. Wird Teil des VM Namens. Erlaubt sind a–z, 0–9 und `-`, beginnt mit einem Buchstaben, 3–30 Zeichen.
       placeholder: notenrechner
     validations:
       required: true
