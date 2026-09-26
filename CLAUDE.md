@@ -35,5 +35,6 @@ Benachrichtigung ausschließlich per @-Mention (GitHub-Mail), einzelne Personen,
 
 - Issue-Form-Feld-IDs sind Schnittstelle zu den Workflows — nicht umbenennen ohne Workflows anzupassen.
 - Feld-Labels exakt nach Michael Wagners Vorgabe (siehe `docs/anforderungen.md`).
+- YAML-Dateien mit Endung `.yaml` – Ausnahme `.github/ISSUE_TEMPLATE/config.yml` (GitHub erkennt nur `.yml`).
 - Workflows: minimale `permissions`, Parsing mit `actions/github-script`, keine Fremd-Actions ohne Grund.
 - Repo ist öffentlich: keine Secrets/Zugangsdaten in Issues oder Code. IP-Adressen (privat) im Issue sind ok.
