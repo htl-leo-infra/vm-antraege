@@ -17,6 +17,9 @@ endif::[]
 Hier beantragt ihr für euer Projekt oder eure Diplomarbeit eine virtuelle Maschine (VM)
 oder einen LXC-Container in der Proxmox-Umgebung der HTL Leonding.
 
+NOTE: *English speaking students:* read the link:schueler-guide.adoc[English guide] and use the form
+link:https://github.com/htl-leo-infra/vm-antraege/issues/new/choose[„Request a VM or LXC for a project (English)"].
+
 == So läuft es
 
 . link:schueler-leitfaden.adoc[*Leitfaden lesen*] — was ihr bekommt, wie ihr den Projektnamen

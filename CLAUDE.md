@@ -33,7 +33,9 @@ Benachrichtigung ausschließlich per @-Mention (GitHub-Mail), einzelne Personen,
 
 ## Konventionen
 
-- Issue-Form-Feld-IDs sind Schnittstelle zu den Workflows — nicht umbenennen ohne Workflows anzupassen.
+- Zwei Formulare: `vm-antrag.yaml` (DE) und `vm-request.yaml` (EN, zusätzliches Label `english`). Gleiche Feld-IDs, gleiche Reihenfolge. **Jede Feldänderung in beiden Formularen + Leitfäden (`schueler-leitfaden.adoc`, `schueler-guide.adoc`) + Label-Map im Workflow.**
+- Workflows parsen den Issue-Body über die Feld-Labels (`### Projektname` / `### Project name`) → Map DE/EN-Label → Feld-ID. Bot-Kommentare auf Englisch, wenn Label `english`.
+- Admin-Seite (Status-Labels, `/ip`, Kommentare an Admins) bleibt deutsch.
 - Feld-Labels exakt nach Michael Wagners Vorgabe (siehe `docs/anforderungen.md`).
 - YAML-Dateien mit Endung `.yaml` – Ausnahme `.github/ISSUE_TEMPLATE/config.yml` (GitHub erkennt nur `.yml`).
 - Workflows: minimale `permissions`, Parsing mit `actions/github-script`, keine Fremd-Actions ohne Grund.

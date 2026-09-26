@@ -46,6 +46,7 @@ gh api -X PATCH orgs/htl-leo-infra -F members_can_create_repositories=false
 | `ip-eintragen.yaml` | `issue_comment: created`, beginnt mit `/ip` | Berechtigung (`collaborators/{user}/permission` ≥ triage) + IPv4 prüfen → `status: freigegeben` → `status: ip-vergeben`, Kommentar mit Zusammenfassung aller Felder + IP und @MWagnerOE5AOO @Master-Andi. Nicht-Admins ignorieren |
 | `erstellt.yaml` | `issues: labeled` = `status: erstellt` | `status: ip-vergeben` entfernen, Kommentar an Antragsteller*in „VM ist bereit“ |
 
+- **Zweisprachig:** Formulare `vm-antrag.yaml` (DE) + `vm-request.yaml` (EN, Label `english`). Parser braucht Label-Map DE+EN → Feld-ID (inkl. Dropdown-Werte „No – school network only“ usw.). Bot-Kommentare an Schüler*innen englisch bei Label `english`, an Admins immer deutsch.
 - `antrag-pruefen.yaml` setzt Titel automatisch auf `[VM] <projektname>` (Wert aus Feld Projektname)
 - `actions/github-script` zum Parsen des Issue-Form-Bodys (`### <Label>\n\n<Wert>`), Feld-Labels siehe `vm-antrag.yaml`
 - Minimale `permissions` (`issues: write`, `contents: read`)

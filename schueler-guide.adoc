@@ -1,0 +1,112 @@
+= Guide: Requesting a VM or Container
+:toc: left
+:toc-title: Contents
+:toclevels: 2
+:sectnums:
+:icons: font
+:source-highlighter: rouge
+:experimental:
+
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+_Deutsche Version: link:schueler-leitfaden.adoc[Leitfaden]_
+
+== What you get
+
+A virtual machine (VM) or an LXC container in the school's Proxmox environment —
+for the duration of your project. You set up whatever runs on it yourselves.
+
+[cols="1,3",options="header"]
+|===
+|Type |When?
+
+|*LXC*
+|Lightweight Linux container. Sufficient for most web applications, databases and
+Docker setups. Starts fast, needs few resources.
+
+|*VM*
+|Full virtual machine. Needed if you require a different operating system, your own
+kernel or kernel modules.
+|===
+
+TIP: If unsure, choose "Don't know" and explain in the _Project description_ field what
+should run on it. We will decide together with you.
+
+== Choosing the project name
+
+The project name becomes part of the VM name. Therefore strict rules apply:
+
+* only lowercase letters `a`–`z`, digits `0`–`9` and hyphen `-`
+* no spaces, no special characters
+* 3 to 30 characters
+* must start with a letter
+
+[cols="1,1",options="header"]
+|===
+|✅ Good |❌ Bad
+
+|`gradecalculator` |`GradeCalculator`
+|`leo-canteen` |`leo canteen`
+|`da-smarthome` |`Smart_Home_DA`
+|===
+
+If the name is invalid, your issue gets the label `ungültig` (invalid) and a note. Simply
+correct the issue (menu `…` → _Edit_), it will be checked again automatically.
+
+== Resources
+
+Choose as little as possible — all projects of the school share the resources.
+
+* *CPU cores:* 1–2 are enough for almost all school projects.
+* *RAM:* 2 GB for a small web application, 4 GB with a database and Docker.
+* *Disk:* 10–20 GB, unless you store large amounts of data.
+
+If you need more, choose "more" and justify it under _Special requirements_.
+
+== Reachability: Internet, ports and DNS
+
+By default your VM is reachable *only within the school network* (`Internet: No`).
+
+If it should also be reachable from the internet (`Internet: Yes`), you additionally need:
+
+Public ports::
+Which ports are forwarded from outside? For a website usually `80, 443`.
+*Only* specify ports that really need to be public — never database ports
+(`5432`, `3306`, …) or SSH (`22`).
+
+DNS name::
+Under which name the VM should be reachable, e.g. `gradecalculator.htl-leonding.ac.at`.
+
+[WARNING]
+====
+A VM on the internet is attacked by bots within minutes. Keep the system up to date,
+use strong passwords or SSH keys and open only what is necessary.
+====
+
+== What happens after the request
+
+The status labels are in German. This is what they mean:
+
+. You submit the request — label `status: neu` (new).
+. The request is reviewed and approved — label `status: freigegeben` (approved).
+. The VM gets an IP address, it is posted as a comment in the issue — label `status: ip-vergeben` (IP assigned).
+. The VM is created — label `status: erstellt` (created), you get a comment with the access information.
+
+Ask questions as a comment directly in your issue — English is fine.
+
+== When you no longer need the VM
+
+Write a comment in your issue. The VM will then be deleted and the issue closed.
+At the latest after the specified _Usage period_ the VM will be removed anyway.
+
+[IMPORTANT]
+====
+This repository is *public*. Never write passwords, private keys or credentials in an
+issue. You will receive access credentials for the VM through a different channel.
+====

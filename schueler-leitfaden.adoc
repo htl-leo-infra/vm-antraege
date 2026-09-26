@@ -15,6 +15,8 @@ ifdef::env-github[]
 :warning-caption: :warning:
 endif::[]
 
+_English version: link:schueler-guide.adoc[Guide]_
+
 == Was ihr bekommt
 
 Eine virtuelle Maschine (VM) oder einen LXC-Container in der Proxmox-Umgebung der Schule —
