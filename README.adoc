@@ -50,3 +50,8 @@ Den aktuellen Stand seht ihr jederzeit am Label eures Issues:
 Dieses Repository ist *öffentlich*. Alles, was ihr in einem Issue schreibt, kann jede*r lesen.
 Keine Passwörter, keine Schlüssel, keine privaten Daten.
 ====
+
+== Für Admins
+
+Wie die Workflows auf Labels und Kommentare reagieren (Freigabe, `/ip`, VM erstellt):
+link:docs/ablauf.adoc[Ablauf: Was bei Aktionen im Issue passiert].

@@ -1,0 +1,237 @@
+= Ablauf: Was bei Aktionen im Issue passiert
+:toc: left
+:toc-title: Inhaltsverzeichnis
+:toclevels: 2
+:sectnums:
+:icons: font
+:source-highlighter: rouge
+:experimental:
+
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+Technische Beschreibung der GitHub-Actions-Workflows für Admins
+(Freigabe, IP-Vergabe, VM-Erstellung) und Betreuer*innen des Repos.
+
+[[grundprinzip]]
+== Grundprinzip
+
+GitHub startet bei jedem Ereignis im Repo alle Workflows, die auf dieses Ereignis hören.
+Jeder Workflow prüft zuerst eine *Bedingung* (`if:`). Trifft sie nicht zu, wird er sofort
+übersprungen („skipped"). Trifft sie zu, lädt er `.github/scripts/antrag.js` und führt ein
+Skript aus.
+
+IMPORTANT: Alle Bot-Aktionen (Labels, Kommentare, Titel) laufen mit dem `GITHUB_TOKEN`.
+Änderungen mit diesem Token *lösen keine weiteren Workflows aus* — keine Endlosschleifen.
+Setzt der Bot z.B. `status: neu`, reagiert kein anderer Workflow darauf.
+
+[cols="2,2,3",options="header"]
+|===
+|Ereignis |Workflow |Bedingung
+
+|Issue erstellt / bearbeitet
+|`antrag-pruefen.yaml` („Antrag prüfen")
+|Label `vm-antrag` und Issue offen
+
+.2+|Label hinzugefügt
+|`freigabe.yaml` („Freigabe")
+|Label = `status: freigegeben`
+
+|`erstellt.yaml` („VM erstellt")
+|Label = `status: erstellt`
+
+|Kommentar geschrieben
+|`ip-eintragen.yaml` („IP eintragen")
+|beginnt mit `/ip`, Label `vm-antrag`
+|===
+
+.Status-Kette
+[source,text]
+----
+(Antrag) ──► ungültig ◄──► status: neu ──► status: freigegeben ──► status: ip-vergeben ──► status: erstellt
+              Bot            Bot            Peter (Label)          Himmelbauer (/ip)        Wagner/Brückner (Label)
+----
+
+[[personen]]
+=== Zuständige Personen
+
+Die erwähnten Personen kommen aus Repo-Variablen. Ohne Variable gilt der Default im Workflow.
+
+[cols="1,2,2",options="header"]
+|===
+|Variable |Aufgabe |Default
+
+|`FREIGABE` |Freigabe des Antrags |`bauepete`
+|`IP_VERGABE` |IP-Adresse eintragen |`htl-leonding` (Platzhalter für Thomas Himmelbauer)
+|`VM_ERSTELLUNG` |VM in Proxmox anlegen („Mailverteiler") |`MWagnerOE5AOO Master-Andi`
+|===
+
+[source,bash]
+----
+gh variable set IP_VERGABE -R htl-leo-infra/vm-antraege --body <username>
+----
+
+[[antrag]]
+== Schüler*in erstellt den Antrag
+
+*Ereignis:* `issues: opened` → Workflow *Antrag prüfen*
+
+. *Formular auslesen* — Der Issue-Body hat das Format `### Projektname` + Leerzeile + Wert.
+  `parseBody()` übersetzt die deutschen bzw. englischen Überschriften in Feld-IDs
+  (`projektname`, `internet`, …). `_No response_` gilt als leer.
+. *Titel setzen* — `[VM] <projektname>` wird z.B. zu `[VM] notenrechner`.
+. *Doppelte Namen suchen* — alle *offenen* Anträge (außer `abgelehnt`) laden und deren
+  Projektnamen auslesen.
+. *Prüfen:*
+** *Fehler:* Name ungültig (`^[a-z][a-z0-9-]{2,29}$`) oder bereits vergeben; bei Internet
+   „Yes" fehlen Ports oder DNS; Portnummer ungültig; DNS kein gültiger Hostname
+** *Nur Warnung:* Port 22/3306/5432/6379/27017 öffentlich; Ports/DNS angegeben, obwohl
+   Internet „No"
+. *Mit Fehlern:* Label `ungültig`, Prüfkommentar mit allen Fehlern und unsichtbarer
+  Markierung `<!-- vm-antrag:pruefung -->`. Ende — Peter wird *nicht* benachrichtigt.
+. *Ohne Fehler:* Label `status: neu`, Kommentar `@bauepete Neuer VM-Antrag … bitte freigeben`
+  und für die Schüler*innen „Danke, euer Antrag ist eingegangen".
+  *GitHub schickt Peter eine Mail* (wegen der Erwähnung).
+
+NOTE: Die Sprache richtet sich nach dem Label `english`, das das englische Formular
+automatisch setzt. Texte an Schüler*innen sind dann englisch, Texte an Admins immer deutsch.
+
+[[bearbeiten]]
+== Schüler*in bearbeitet den Antrag
+
+*Ereignis:* `issues: edited` → derselbe Workflow *Antrag prüfen*, derselbe Ablauf.
+
+* *Immer noch fehlerhaft:* Der *vorhandene* Prüfkommentar wird aktualisiert (erkannt an der
+  Markierung) — kein neuer Kommentar.
+* *Jetzt korrekt:* Label `ungültig` weg, Prüfkommentar zeigt „✅ gültig". Ist noch kein
+  Status-Label gesetzt: `status: neu` und Mail an Peter.
+* *Bereits freigegeben und nachträglich bearbeitet:* Es wird nur neu geprüft. Das
+  Status-Label bleibt, *niemand wird benachrichtigt* (siehe <<grenzen>>).
+
+[[freigabe]]
+== Peter gibt frei
+
+*Aktion:* Peter setzt das Label `status: freigegeben` (braucht Rolle Triage, d.h. Mitglied
+im Team `vm-admins`).
+
+*Ereignis:* `issues: labeled` → Workflow *Freigabe*
+
+. Label `status: neu` entfernen.
+. Kommentar: `@<IP_VERGABE> Antrag … wurde von @bauepete freigegeben. Bitte /ip 10.x.x.x`
+  und für die Schüler*innen „Euer Antrag wurde freigegeben".
+. *Die Person für die IP-Vergabe bekommt eine Mail.*
+
+NOTE: Gleichzeitig startet auch *VM erstellt* (ebenfalls ein Label-Ereignis), wird aber
+übersprungen, weil das Label nicht `status: erstellt` ist.
+
+[[ip]]
+== Himmelbauer trägt die IP ein
+
+*Aktion:* Kommentar im Issue:
+
+[source,text]
+----
+/ip 10.0.0.99
+----
+
+*Ereignis:* `issue_comment: created` → Workflow *IP eintragen*
+
+. *Berechtigung prüfen* — Rolle der kommentierenden Person im Repo abfragen. Unter Triage
+  (z.B. Schüler*innen): nur Log-Eintrag, *kein sichtbarer Kommentar*.
+. *Status prüfen* — Ohne Label `status: freigegeben`: 😕-Reaktion und Hinweis
+  „/ip geht nur bei Label status: freigegeben".
+. *IP prüfen* — Nur die erste Zeile zählt, muss eine gültige IPv4-Adresse sein. Sonst 😕
+  und Formathinweis.
+. *Erfolg:*
+** Label `status: freigegeben` → `status: ip-vergeben`
+** 👍-Reaktion auf den Kommentar
+** Kommentar `@MWagnerOE5AOO @Master-Andi Bitte VM anlegen …` mit *Tabelle aller Daten*
+   und IP, für die Schüler*innen „IP-Adresse eurer VM: …"
+** *Michael und Andreas bekommen eine Mail* mit dieser Zusammenfassung — das ist der
+   „Mailverteiler".
+
+[[erstellt]]
+== VM wird angelegt
+
+*Aktion:* VM in Proxmox anlegen (manuell), danach Label `status: erstellt` setzen.
+
+*Ereignis:* `issues: labeled` → Workflow *VM erstellt*
+
+. Label `status: ip-vergeben` entfernen.
+. Kommentar `@<antragsteller*in> 🎉 Eure VM … ist bereit. Zugangsdaten auf anderem Weg …`
+. *Die Antragsteller*in bekommt eine Mail.*
+
+WARNING: Zugangsdaten zur VM niemals im Issue posten — das Repo ist öffentlich.
+
+[[ohne-workflow]]
+== Aktionen ohne Workflow
+
+[cols="2,3",options="header"]
+|===
+|Aktion |Folge
+
+|Normaler Kommentar (Frage, „brauchen VM nicht mehr")
+|Nichts. GitHub benachrichtigt nur Beobachter*innen des Issues und Erwähnte.
+
+|Label `abgelehnt`
+|*Nichts* — kein Kommentar, Issue bleibt offen. Admins kommentieren und schließen selbst.
+
+|Issue schließen
+|Nichts. Der Projektname wird dadurch wieder frei.
+
+|Label manuell entfernen
+|Nichts.
+
+|Issue ohne Formular (Blank issue, nur Maintainer)
+|Alle Workflows überspringen es (kein Label `vm-antrag`).
+|===
+
+[[schutz]]
+== Schutzmechanismen
+
+`concurrency` pro Issue::
+Laufen zwei Ereignisse gleichzeitig (z.B. zwei schnelle Bearbeitungen), werden sie
+nacheinander abgearbeitet.
+
+Minimale Rechte::
+Workflows dürfen nur Issues schreiben (`issues: write`) und Code lesen (`contents: read`).
+
+Keine Nutzereingaben in Shell-Befehlen::
+Alles läuft in JavaScript über `context.payload`. Eingaben wie `$(rm -rf …)` im Formular
+werden nie ausgeführt.
+
+Labels nur für Admins::
+Schüler*innen können als Autor*innen keine Labels setzen. Die Status-Kette lässt sich
+nicht fälschen.
+
+[[grenzen]]
+== Grenzen und offene Punkte
+
+. *Bearbeitung nach Freigabe* — Schüler*innen können nach der Freigabe z.B. Ports ändern,
+  ohne dass jemand benachrichtigt wird. Geplant: Hinweis an Admins bei Bearbeitung mit
+  Status ≥ `freigegeben`.
+. *Parsing über Überschriften* — Enthält ein Textfeld eine Zeile mit `### …`, wird der Wert
+  abgeschnitten. Selten und harmlos.
+. *Team nötig* — Ohne Team `vm-admins` (Rolle Triage) können die Admins weder Labels setzen
+  noch `/ip` verwenden.
+. *`abgelehnt` nicht automatisiert* — geplant: Kommentar und Issue schließen.
+
+[[test]]
+== Testen
+
+Tests nie mit echten Personen — vorher die Variablen auf das eigene Konto setzen, danach
+löschen:
+
+[source,bash]
+----
+gh variable set FREIGABE -R htl-leo-infra/vm-antraege --body htl-leonding
+gh variable set VM_ERSTELLUNG -R htl-leo-infra/vm-antraege --body htl-leonding
+# … Test-Issues durchspielen …
+gh variable delete FREIGABE -R htl-leo-infra/vm-antraege
+gh variable delete VM_ERSTELLUNG -R htl-leo-infra/vm-antraege
+----

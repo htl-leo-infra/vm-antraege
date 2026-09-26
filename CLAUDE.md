@@ -1,7 +1,7 @@
 # vm-antraege
 
 Antragsverfahren für VMs/LXC-Container in der Proxmox-Umgebung der HTL Leonding über GitHub Issues.
-Repo: `htl-leo-infra/vm-antraege` (public). Anforderungen: `docs/anforderungen.md`.
+Repo: `htl-leo-infra/vm-antraege` (public). Anforderungen: `docs/anforderungen.md`. Workflow-Ablauf im Detail: `docs/ablauf.adoc`.
 
 ## Arbeitsweise
 
