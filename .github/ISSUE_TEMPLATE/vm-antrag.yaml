@@ -1,0 +1,168 @@
+name: VM oder LXC für ein Projekt beantragen
+description: Virtuelle Maschine oder Container in der Proxmox-Umgebung der Schule anfordern
+title: "[VM] <Projektname>"
+labels: ["vm-antrag"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Lest vorher den [Leitfaden](https://github.com/htl-leo-infra/vm-antraege/blob/main/schueler-leitfaden.adoc).
+
+        **Achtung:** Dieses Repository ist öffentlich. Alles, was ihr hier eintragt, kann jede*r lesen.
+        Keine Passwörter, keine Schlüssel, keine privaten Daten.
+
+  - type: input
+    id: projektname
+    attributes:
+      label: Projektname
+      description: Klein geschrieben, ohne Leerzeichen. Wird Teil des VM Namens. Erlaubt sind a–z, 0–9 und `-`.
+      placeholder: notenrechner
+    validations:
+      required: true
+
+  - type: textarea
+    id: projektbeschreibung
+    attributes:
+      label: Projektbeschreibung
+      description: Kurze Projektbeschreibung welchen Zweck die VM hat und wie die innere Konfiguration aussieht.
+      placeholder: |
+        Backend für unsere Diplomarbeit „Notenrechner“.
+        Docker mit Quarkus-Backend, PostgreSQL und Nginx als Reverse Proxy.
+    validations:
+      required: true
+
+  - type: input
+    id: lehrkraft
+    attributes:
+      label: Betreuende Lehrkraft
+      placeholder: Maria Muster
+    validations:
+      required: true
+
+  - type: textarea
+    id: team
+    attributes:
+      label: Teammitglieder
+      description: Vor- und Nachname aller, die am Projekt arbeiten.
+      placeholder: |
+        Max Muster
+        Lisa Beispiel
+    validations:
+      required: true
+
+  - type: input
+    id: nutzungsdauer
+    attributes:
+      label: Nutzungsdauer
+      description: Wie lange wird die VM benötigt? Wann kann sie gelöscht werden?
+      placeholder: bis Ende Juni 2027
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Ausstattung
+
+  - type: dropdown
+    id: typ
+    attributes:
+      label: Typ
+      description: LXC-Container sind schlanker und reichen für die meisten Web-Anwendungen. Eine VM braucht ihr z.B. für ein eigenes Betriebssystem oder Kernel-Module. Im Zweifel „Weiß nicht“.
+      options:
+        - LXC
+        - VM
+        - Weiß nicht
+    validations:
+      required: true
+
+  - type: dropdown
+    id: cpu
+    attributes:
+      label: CPU-Kerne
+      options:
+        - "1"
+        - "2"
+        - "4"
+        - mehr (Begründung bei Spezielle Anforderungen)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ram
+    attributes:
+      label: RAM (GB)
+      options:
+        - "1"
+        - "2"
+        - "4"
+        - "8"
+        - mehr (Begründung bei Spezielle Anforderungen)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: disk
+    attributes:
+      label: Disk (GB)
+      options:
+        - "10"
+        - "20"
+        - "50"
+        - mehr (Begründung bei Spezielle Anforderungen)
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Konfiguration
+
+  - type: dropdown
+    id: internet
+    attributes:
+      label: Internet
+      description: Soll die VM Schulintern erreichbar sein oder auch aus dem Internet?
+      options:
+        - "No – nur schulintern"
+        - "Yes – auch aus dem Internet"
+    validations:
+      required: true
+
+  - type: input
+    id: ports
+    attributes:
+      label: Public Ports
+      description: Welche Ports sollen ins Internet weitergeleitet werden? Nur bei Internet „Yes“.
+      placeholder: 80, 443
+    validations:
+      required: false
+
+  - type: input
+    id: dns
+    attributes:
+      label: DNS Name
+      description: Mit welchem DNS-Namen soll die VM aus dem Internet erreichbar sein? Nur bei Internet „Yes“.
+      placeholder: notenrechner.htl-leonding.ac.at
+    validations:
+      required: false
+
+  - type: textarea
+    id: spezielles
+    attributes:
+      label: Spezielle Anforderungen
+      description: Weitere technische Anforderungen an die VM die nicht oben erfasst sind.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: bestaetigung
+    attributes:
+      label: Bestätigung
+      options:
+        - label: Wir haben den Leitfaden gelesen.
+          required: true
+        - label: Unsere betreuende Lehrkraft weiß von diesem Antrag.
+          required: true
+        - label: Wir melden uns, sobald die VM nicht mehr gebraucht wird.
+          required: true

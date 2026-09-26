@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Fragen zum Antrag
+    url: https://github.com/htl-leo-infra/vm-antraege/blob/main/schueler-leitfaden.adoc
+    about: Erst den Leitfaden lesen — die meisten Fragen sind dort beantwortet.

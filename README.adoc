@@ -1,0 +1,49 @@
+= VMs und Container für Schülerprojekte — Anträge
+:toc: left
+:toc-title: Inhaltsverzeichnis
+:toclevels: 2
+:icons: font
+:source-highlighter: rouge
+:experimental:
+
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+Hier beantragt ihr für euer Projekt oder eure Diplomarbeit eine virtuelle Maschine (VM)
+oder einen LXC-Container in der Proxmox-Umgebung der HTL Leonding.
+
+== So läuft es
+
+. link:schueler-leitfaden.adoc[*Leitfaden lesen*] — was ihr bekommt, wie ihr den Projektnamen
+  wählt und was es mit Ports und DNS auf sich hat.
+. link:https://github.com/htl-leo-infra/vm-antraege/issues/new/choose[*Antrag stellen*]
+  — ein GitHub-Issue mit dem Formular „VM oder LXC für ein Projekt beantragen".
+  Ihr braucht dafür nur ein GitHub-Konto.
+. *Freigabe* — euer Antrag wird geprüft und freigegeben.
+. *IP-Adresse* — eure VM bekommt eine IP-Adresse, sie steht danach im Issue.
+. *Erstellung* — die VM wird angelegt. Ihr bekommt eine Nachricht im Issue, sobald sie bereit ist.
+
+Den aktuellen Stand seht ihr jederzeit am Label eures Issues:
+
+[cols="1,3",options="header"]
+|===
+|Label |Bedeutung
+
+|`status: neu` |Antrag eingegangen, wartet auf Freigabe
+|`status: freigegeben` |Freigegeben, wartet auf IP-Adresse
+|`status: ip-vergeben` |IP-Adresse vergeben, VM wird angelegt
+|`status: erstellt` |VM ist bereit
+|`ungültig` |Formular fehlerhaft — bitte den Hinweis im Issue lesen und den Antrag korrigieren
+|`abgelehnt` |Antrag nicht genehmigt
+|===
+
+[WARNING]
+====
+Dieses Repository ist *öffentlich*. Alles, was ihr in einem Issue schreibt, kann jede*r lesen.
+Keine Passwörter, keine Schlüssel, keine privaten Daten.
+====
