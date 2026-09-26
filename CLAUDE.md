@@ -38,5 +38,7 @@ Benachrichtigung ausschließlich per @-Mention (GitHub-Mail), einzelne Personen,
 - Admin-Seite (Status-Labels, `/ip`, Kommentare an Admins) bleibt deutsch.
 - Feld-Labels exakt nach Michael Wagners Vorgabe (siehe `docs/anforderungen.md`).
 - YAML-Dateien mit Endung `.yaml` – Ausnahme `.github/ISSUE_TEMPLATE/config.yml` (GitHub erkennt nur `.yml`).
+- Gemeinsame Workflow-Logik in `.github/scripts/antrag.js` (Parser, Validierung, Label-Konstanten, Kommentar-Helfer).
+- Zuständige Personen über Repo-Variablen `FREIGABE`, `IP_VERGABE`, `VM_ERSTELLUNG` (Usernamen, leerzeichengetrennt), Defaults im Workflow.
 - Workflows: minimale `permissions`, Parsing mit `actions/github-script`, keine Fremd-Actions ohne Grund.
 - Repo ist öffentlich: keine Secrets/Zugangsdaten in Issues oder Code. IP-Adressen (privat) im Issue sind ok.

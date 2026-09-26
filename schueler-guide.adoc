@@ -89,6 +89,20 @@ A VM on the internet is attacked by bots within minutes. Keep the system up to d
 use strong passwords or SSH keys and open only what is necessary.
 ====
 
+== Login for your application (Keycloak)
+
+If your application needs a login, do *not build your own user management* with
+self-stored passwords. The school offers a secure login service (Keycloak):
+
+* *with school account:* users log in with their HTL account — you receive their ID,
+  class and role.
+* *without school account:* access for external people (parents, partner companies,
+  test users) is possible too — state this in the request.
+
+Request access separately at
+link:https://github.com/htl-leonding-college/keycloak-antraege[keycloak-antraege]
+(form "Client für ein Schülerprojekt beantragen"; the Keycloak guide is in German).
+
 == What happens after the request
 
 The status labels are in German. This is what they mean:
@@ -96,7 +110,7 @@ The status labels are in German. This is what they mean:
 . You submit the request — label `status: neu` (new).
 . The request is reviewed and approved — label `status: freigegeben` (approved).
 . The VM gets an IP address, it is posted as a comment in the issue — label `status: ip-vergeben` (IP assigned).
-. The VM is created — label `status: erstellt` (created), you get a comment with the access information.
+. The VM is created — label `status: erstellt` (created), you get a message in the issue. The access credentials come through a separate channel.
 
 Ask questions as a comment directly in your issue — English is fine.
 

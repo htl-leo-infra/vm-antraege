@@ -1,0 +1,37 @@
+name: VM erstellt
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: antrag-${{ github.event.issue.number }}
+
+jobs:
+  erstellt:
+    if: >-
+      github.event.label.name == 'status: erstellt' && contains(github.event.issue.labels.*.name, 'vm-antrag')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const a = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/antrag.js`);
+            const issue = context.payload.issue;
+            const nr = issue.number;
+            const f = a.parseBody(issue.body);
+
+            await a.removeLabel(github, context, nr, a.LABEL.ipVergeben);
+            await a.comment(github, context, nr, `@${issue.user.login} ` + (a.isEnglish(issue)
+              ? `🎉 Your VM \`${f.projektname}\` is ready. You will receive the access credentials through a separate channel – never post them here.\n\n` +
+                'When you no longer need the VM, just write a comment here.'
+              : `🎉 Eure VM \`${f.projektname}\` ist bereit. Die Zugangsdaten bekommt ihr auf einem anderen Weg – bitte niemals hier posten.\n\n` +
+                'Wenn ihr die VM nicht mehr braucht, schreibt einfach einen Kommentar hier.'));

@@ -89,12 +89,26 @@ Eine VM im Internet wird innerhalb von Minuten von fremden Bots angegriffen. Hal
 System aktuell, verwendet sichere Passwörter bzw. SSH-Schlüssel und öffnet nur, was nötig ist.
 ====
 
+== Anmeldung für eure Anwendung (Keycloak)
+
+Braucht eure Anwendung eine Anmeldung, baut *keine eigene Benutzerverwaltung* mit
+selbst gespeicherten Passwörtern. Die Schule bietet einen sicheren Anmeldedienst (Keycloak):
+
+* *mit Schulkonto:* Nutzer*innen melden sich mit ihrem HTL-Konto an — ihr bekommt Kennung,
+  Klasse und Rolle mit.
+* *ohne Schulkonto:* auch Zugänge für externe Personen (Eltern, Partnerbetriebe,
+  Testpersonen) sind möglich — gebt das im Antrag an.
+
+Den Zugang beantragt ihr separat unter
+link:https://github.com/htl-leonding-college/keycloak-antraege[keycloak-antraege]
+(Formular „Client für ein Schülerprojekt beantragen").
+
 == Ablauf nach dem Antrag
 
 . Ihr stellt den Antrag — Label `status: neu`.
 . Der Antrag wird geprüft und freigegeben — Label `status: freigegeben`.
 . Die VM bekommt eine IP-Adresse, sie steht als Kommentar im Issue — Label `status: ip-vergeben`.
-. Die VM wird angelegt — Label `status: erstellt`, ihr bekommt einen Kommentar mit den Zugangsinfos.
+. Die VM wird angelegt — Label `status: erstellt`, ihr bekommt eine Nachricht im Issue. Die Zugangsdaten kommen auf einem anderen Weg.
 
 Fragen stellt ihr als Kommentar direkt in eurem Issue.
 

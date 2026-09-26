@@ -1,0 +1,69 @@
+name: IP eintragen
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: antrag-${{ github.event.issue.number }}
+
+jobs:
+  ip:
+    if: >-
+      !github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/ip') &&
+      contains(github.event.issue.labels.*.name, 'vm-antrag')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - uses: actions/github-script@v9
+        env:
+          VM_ERSTELLUNG: ${{ vars.VM_ERSTELLUNG || 'MWagnerOE5AOO Master-Andi' }}
+        with:
+          script: |
+            const a = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/antrag.js`);
+            const issue = context.payload.issue;
+            const c = context.payload.comment;
+            const nr = issue.number;
+            const react = (content) => github.rest.reactions.createForIssueComment({ ...context.repo, comment_id: c.id, content });
+
+            // Nur Triage oder höher darf IPs eintragen
+            let role = 'none';
+            try {
+              const { data } = await github.rest.repos.getCollaboratorPermissionLevel({ ...context.repo, username: c.user.login });
+              role = data.role_name;
+            } catch (e) {
+              if (e.status !== 404) throw e;
+            }
+            if (!['triage', 'write', 'maintain', 'admin'].includes(role)) {
+              core.info(`${c.user.login} (${role}) darf keine IP eintragen – ignoriert.`);
+              return;
+            }
+
+            const reply = async (msg) => { await react('confused'); await a.comment(github, context, nr, `@${c.user.login} ${msg}`); };
+
+            if (!a.labelNames(issue).includes(a.LABEL.freigegeben)) {
+              return reply(`\`/ip\` geht nur bei Label \`${a.LABEL.freigegeben}\`.`);
+            }
+            const m = c.body.trim().split('\n')[0].match(/^\/ip\s+(\S+)\s*$/);
+            if (!m || !a.isIPv4(m[1])) {
+              return reply('Format: `/ip 10.x.x.x` (eine gültige IPv4-Adresse).');
+            }
+            const ip = m[1];
+            const f = a.parseBody(issue.body);
+
+            await a.removeLabel(github, context, nr, a.LABEL.freigegeben);
+            await a.addLabels(github, context, nr, [a.LABEL.ipVergeben]);
+            await react('+1');
+            await a.comment(github, context, nr,
+              `${a.mention(process.env.VM_ERSTELLUNG)} Bitte VM anlegen und danach Label \`${a.LABEL.erstellt}\` setzen.\n\n` +
+              a.summary(f, ip) + '\n\n---\n\n' +
+              (a.isEnglish(issue) ? `IP address of your VM: \`${ip}\`. The VM will be created next.`
+                                  : `IP-Adresse eurer VM: \`${ip}\`. Als Nächstes wird die VM angelegt.`));

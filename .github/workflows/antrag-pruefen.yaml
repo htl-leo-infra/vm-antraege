@@ -1,0 +1,81 @@
+name: Antrag prüfen
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: antrag-${{ github.event.issue.number }}
+
+jobs:
+  pruefen:
+    if: contains(github.event.issue.labels.*.name, 'vm-antrag') && github.event.issue.state == 'open'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - uses: actions/github-script@v9
+        env:
+          FREIGABE: ${{ vars.FREIGABE || 'bauepete' }}
+        with:
+          script: |
+            const a = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/antrag.js`);
+            const issue = context.payload.issue;
+            const nr = issue.number;
+            const en = a.isEnglish(issue);
+            const t = (de, e) => (en ? e : de);
+            const labels = a.labelNames(issue);
+            const f = a.parseBody(issue.body);
+
+            // Titel vereinheitlichen
+            if (f.projektname) {
+              const title = `[VM] ${f.projektname}`;
+              if (issue.title !== title) {
+                await github.rest.issues.update({ ...context.repo, issue_number: nr, title });
+              }
+            }
+
+            // Projektnamen anderer offener Anträge
+            const open = await github.paginate(github.rest.issues.listForRepo, {
+              ...context.repo, labels: a.LABEL.antrag, state: 'open', per_page: 100,
+            });
+            const taken = open
+              .filter((o) => o.number !== nr && !o.pull_request && !a.labelNames(o).includes(a.LABEL.abgelehnt))
+              .map((o) => a.parseBody(o.body).projektname);
+
+            const { errors, warnings } = a.validate(f, taken, en);
+            const warnText = warnings.length ? `\n\n${warnings.map((w) => `> ⚠️ ${w}`).join('\n>\n')}` : '';
+
+            if (errors.length) {
+              await a.addLabels(github, context, nr, [a.LABEL.ungueltig]);
+              await a.upsertComment(github, context, nr, 'vm-antrag:pruefung',
+                t('❌ **Der Antrag ist noch nicht gültig:**', '❌ **The request is not valid yet:**') + '\n\n' +
+                errors.map((e) => `- ${e}`).join('\n') + '\n\n' +
+                t('Bitte das Issue korrigieren (Menü `…` → _Edit_). Es wird automatisch neu geprüft.',
+                  'Please correct the issue (menu `…` → _Edit_). It will be checked again automatically.') +
+                warnText);
+              return;
+            }
+
+            if (labels.includes(a.LABEL.ungueltig)) {
+              await a.removeLabel(github, context, nr, a.LABEL.ungueltig);
+            }
+            await a.upsertComment(github, context, nr, 'vm-antrag:pruefung',
+              t('✅ Der Antrag ist gültig.', '✅ The request is valid.') + warnText, true);
+
+            // Erstmals gültig → zur Freigabe
+            if (!labels.some((l) => a.STATUS_LABELS.includes(l))) {
+              await a.addLabels(github, context, nr, [a.LABEL.neu]);
+              await a.comment(github, context, nr,
+                `${a.mention(process.env.FREIGABE)} Neuer VM-Antrag \`${f.projektname}\` – bitte prüfen und mit Label ` +
+                `\`${a.LABEL.freigegeben}\` freigeben (oder \`${a.LABEL.abgelehnt}\`).\n\n` +
+                t('Danke, euer Antrag ist eingegangen und wartet auf Freigabe.',
+                  'Thank you, your request has been received and is waiting for approval.') +
+                warnText);
+            }
