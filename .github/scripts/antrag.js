@@ -60,8 +60,8 @@ const splitPorts = (s) => (s || '').split(/[\s,;]+/).filter(Boolean);
 const mention = (users) => (users || '').split(/[\s,]+/).filter(Boolean).map((u) => `@${u.replace(/^@/, '')}`).join(' ');
 const isIPv4 = (s) => IPV4_RE.test(s);
 
-// Prüft die Formularwerte. takenNames: Projektnamen anderer offener Anträge.
-function validate(f, takenNames, en) {
+// Prüft die Formularwerte. others: Felder (parseBody) anderer offener Anträge.
+function validate(f, others, en) {
   const t = (de, e) => (en ? e : de);
   const errors = [];
   const warnings = [];
@@ -71,7 +71,7 @@ function validate(f, takenNames, en) {
     errors.push(t(
       `Projektname \`${name}\` ist ungültig: nur a–z, 0–9 und \`-\`, beginnt mit einem Buchstaben, 3–30 Zeichen.`,
       `Project name \`${name}\` is invalid: only a–z, 0–9 and \`-\`, must start with a letter, 3–30 characters.`));
-  } else if (takenNames.includes(name)) {
+  } else if (others.some((o) => o.projektname === name)) {
     errors.push(t(
       `Projektname \`${name}\` ist bereits von einem anderen offenen Antrag belegt. Bitte einen anderen Namen wählen.`,
       `Project name \`${name}\` is already used by another open request. Please choose a different name.`));
@@ -104,6 +104,10 @@ function validate(f, takenNames, en) {
 
   if (f.dns && !HOST_RE.test(f.dns)) {
     errors.push(t(`DNS Name \`${f.dns}\` ist ungültig.`, `DNS name \`${f.dns}\` is invalid.`));
+  } else if (f.dns && wantsInternet(f) && others.some((o) => wantsInternet(o) && (o.dns || '').toLowerCase() === f.dns.toLowerCase())) {
+    errors.push(t(
+      `DNS Name \`${f.dns}\` ist bereits von einem anderen offenen Antrag belegt.`,
+      `DNS name \`${f.dns}\` is already used by another open request.`));
   }
 
   return { errors, warnings };

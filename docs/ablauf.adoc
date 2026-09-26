@@ -94,9 +94,10 @@ gh variable set IP_VERGABE -R htl-leo-infra/vm-antraege --body <username>
   (`projektname`, `internet`, …). `_No response_` gilt als leer.
 . *Titel setzen* — `[VM] <projektname>` wird z.B. zu `[VM] notenrechner`.
 . *Doppelte Namen suchen* — alle *offenen* Anträge (außer `abgelehnt`) laden und deren
-  Projektnamen auslesen.
+  Projektnamen und DNS-Namen auslesen.
 . *Prüfen:*
-** *Fehler:* Name ungültig (`^[a-z][a-z0-9-]{2,29}$`) oder bereits vergeben; bei Internet
+** *Fehler:* Name ungültig (`^[a-z][a-z0-9-]{2,29}$`) oder bereits vergeben; DNS Name bereits
+   von einem anderen offenen Antrag mit Internet „Yes" belegt; bei Internet
    „Yes" fehlen Ports oder DNS; Portnummer ungültig; DNS kein gültiger Hostname
 ** *Nur Warnung:* Port 22/3306/5432/6379/27017 öffentlich; Ports/DNS angegeben, obwohl
    Internet „No"

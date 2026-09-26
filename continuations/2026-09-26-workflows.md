@@ -26,7 +26,8 @@ Lies zuerst `CLAUDE.md` und `docs/anforderungen.md`.
   - Ablehnung (`reject()` in `antrag.js`): Status-Labels weg, `abgelehnt`, Kommentar, schließen (not planned); bei `ip-vergeben` @IP_VERGABE; bei `erstellt` nur Hinweis, nicht schließen
 - Repo-Variablen (optional, Defaults im Workflow): `FREIGABE`=bauepete, `IP_VERGABE`=htl-leonding (Platzhalter), `VM_ERSTELLUNG`=`MWagnerOE5AOO Master-Andi`
 - End-to-End-Test bestanden (Issues #1, #2, geschlossen „not planned“); Test-Variablen gelöscht
-- Workflows zusammengelegt (freigabe/erstellt/ip-eintragen → status + kommandos), `/ablehnen` ergänzt – **Ablehnung noch nicht end-to-end getestet**
+- Workflows zusammengelegt (freigabe/erstellt/ip-eintragen → status + kommandos), `/ablehnen` ergänzt – end-to-end getestet (#3–#5); nur „Ablehnen bei erstellt“ lediglich lokal getestet
+- DNS Name muss unter offenen Anträgen mit Internet „Yes“ eindeutig sein
 - Actions: `checkout@v7`, `github-script@v9`
 
 ## Nächste Schritte

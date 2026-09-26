@@ -41,15 +41,15 @@ jobs:
               }
             }
 
-            // Projektnamen anderer offener Anträge
+            // Felder anderer offener Anträge (Eindeutigkeit Projektname / DNS Name)
             const open = await github.paginate(github.rest.issues.listForRepo, {
               ...context.repo, labels: a.LABEL.antrag, state: 'open', per_page: 100,
             });
-            const taken = open
+            const others = open
               .filter((o) => o.number !== nr && !o.pull_request && !a.labelNames(o).includes(a.LABEL.abgelehnt))
-              .map((o) => a.parseBody(o.body).projektname);
+              .map((o) => a.parseBody(o.body));
 
-            const { errors, warnings } = a.validate(f, taken, en);
+            const { errors, warnings } = a.validate(f, others, en);
             const warnText = warnings.length ? `\n\n${warnings.map((w) => `> ⚠️ ${w}`).join('\n>\n')}` : '';
 
             if (errors.length) {
