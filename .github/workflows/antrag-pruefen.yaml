@@ -23,6 +23,7 @@ jobs:
       - uses: actions/github-script@v9
         env:
           FREIGABE: ${{ vars.FREIGABE || 'bauepete' }}
+          VM_ERSTELLUNG: ${{ vars.VM_ERSTELLUNG || 'Master-Andi MWagnerOE5AOO' }}
         with:
           script: |
             const a = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/antrag.js`);
@@ -38,6 +39,21 @@ jobs:
               const title = `[VM] ${f.projektname}`;
               if (issue.title !== title) {
                 await github.rest.issues.update({ ...context.repo, issue_number: nr, title });
+              }
+            }
+
+            // Änderung nach der Freigabe → Admins informieren (Teammitglieder = Proxmox-Zugriff!)
+            const oldBody = context.payload.changes?.body?.from;
+            if (context.payload.action === 'edited' && oldBody !== undefined && labels.some((l) => a.APPROVED_LABELS.includes(l))) {
+              const diff = a.diffFields(a.parseBody(oldBody), f);
+              if (diff.length) {
+                const esc = (v) => (v ? String(v).replace(/\|/g, '\\|').replace(/\n+/g, '<br>') : '_leer_');
+                const admins = [...new Set(`${process.env.FREIGABE} ${process.env.VM_ERSTELLUNG}`.split(/\s+/).filter(Boolean))].join(' ');
+                await a.comment(github, context, nr,
+                  `${a.mention(admins)} ⚠️ Antrag \`${f.projektname}\` wurde **nach der Freigabe** von @${context.actor} geändert:\n\n` +
+                  '| Feld | vorher | nachher |\n|---|---|---|\n' +
+                  diff.map((d) => `| ${d.name} | ${esc(d.old)} | ${esc(d.new)} |`).join('\n') +
+                  (diff.some((d) => d.id === 'team') ? '\n\n**Teammitglieder geändert → Proxmox-Zugriff prüfen!**' : ''));
               }
             }
 

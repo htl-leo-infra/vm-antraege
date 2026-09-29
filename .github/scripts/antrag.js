@@ -31,11 +31,22 @@ const LABEL = {
   ungueltig: 'ungültig',
 };
 const STATUS_LABELS = [LABEL.neu, LABEL.freigegeben, LABEL.ipVergeben, LABEL.erstellt, LABEL.abgelehnt];
+// Ab diesem Status ist der Antrag freigegeben – Änderungen müssen die Admins sehen.
+const APPROVED_LABELS = [LABEL.freigegeben, LABEL.ipVergeben, LABEL.erstellt];
+
+// Deutsche Feldnamen für Admin-Kommentare.
+const FIELD_NAMES = {
+  projektname: 'Projektname', projektbeschreibung: 'Projektbeschreibung', lehrkraft: 'Betreuende Lehrkraft',
+  team: 'Teammitglieder', nutzungsdauer: 'Nutzungsdauer', typ: 'Typ', cpu: 'CPU-Kerne', ram: 'RAM (GB)',
+  disk: 'Disk (GB)', internet: 'Internet', ports: 'Public Ports', dns: 'DNS Name', spezielles: 'Spezielle Anforderungen',
+};
 
 const NAME_RE = /^[a-z][a-z0-9-]{2,29}$/;
 const HOST_RE = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
 const IPV4_RE = /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
 const RISKY_PORTS = [22, 3306, 5432, 6379, 27017];
+// Schul-Benutzernamen: ad=Abendschule, kd=Kolleg, if=Informatik, it=Medientechnik, el=Elektronik, bg=Biomedizin
+const USERNAME_RE = /^(ad|kd|if|it|el|bg)\d{6}$/;
 
 // Issue-Form-Body ("### Label\n\nWert") → { feldId: wert }
 function parseBody(body) {
@@ -59,6 +70,28 @@ const wantsInternet = (f) => /^yes/i.test(f.internet || '');
 const splitPorts = (s) => (s || '').split(/[\s,;]+/).filter(Boolean);
 const mention = (users) => (users || '').split(/[\s,]+/).filter(Boolean).map((u) => `@${u.replace(/^@/, '')}`).join(' ');
 const isIPv4 = (s) => IPV4_RE.test(s);
+const splitUsers = (s) => (s || '').split(/[\s,;]+/).filter(Boolean);
+
+// IPv4 mit optionalem Präfix, z.B. 10.9.32.1 oder 10.9.32.1/24
+function isIPv4Cidr(s) {
+  const [ip, prefix, ...rest] = (s || '').split('/');
+  if (rest.length || !isIPv4(ip)) return false;
+  return prefix === undefined || (/^\d{1,2}$/.test(prefix) && +prefix <= 32);
+}
+
+// "/ip <intern>[/prefix] [/public|public <öffentlich>[/prefix]]" → { intern, public } oder null
+function parseIpCommand(line) {
+  const m = (line || '').trim().match(/^\/ip\s+(\S+)(?:\s+\/?public\s+(\S+))?\s*$/i);
+  if (!m || !isIPv4Cidr(m[1]) || (m[2] && !isIPv4Cidr(m[2]))) return null;
+  return { intern: m[1], public: m[2] || '' };
+}
+
+// Geänderte Felder zwischen zwei Formularständen (ohne Bestätigung).
+function diffFields(oldF, newF) {
+  return Object.keys(FIELD_NAMES)
+    .filter((id) => (oldF[id] || '') !== (newF[id] || ''))
+    .map((id) => ({ id, name: FIELD_NAMES[id], old: oldF[id] || '', new: newF[id] || '' }));
+}
 
 // Prüft die Formularwerte. others: Felder (parseBody) anderer offener Anträge.
 function validate(f, others, en) {
@@ -75,6 +108,16 @@ function validate(f, others, en) {
     errors.push(t(
       `Projektname \`${name}\` ist bereits von einem anderen offenen Antrag belegt. Bitte einen anderen Namen wählen.`,
       `Project name \`${name}\` is already used by another open request. Please choose a different name.`));
+  }
+
+  const users = splitUsers(f.team);
+  const badUsers = users.filter((u) => !USERNAME_RE.test(u));
+  if (!users.length) {
+    errors.push(t('Teammitglieder: bitte die Schul-Benutzernamen angeben.', 'Team members: please enter the school usernames.'));
+  } else if (badUsers.length) {
+    errors.push(t(
+      `Teammitglieder: \`${badUsers.join(', ')}\` ist kein gültiger Schul-Benutzername. Erwartet z.B. \`if123456\` (Kürzel ad/kd/if/it/el/bg + 6 Ziffern, klein geschrieben), einer pro Zeile.`,
+      `Team members: \`${badUsers.join(', ')}\` is not a valid school username. Expected e.g. \`if123456\` (prefix ad/kd/if/it/el/bg + 6 digits, lowercase), one per line.`));
   }
 
   if (wantsInternet(f)) {
@@ -114,10 +157,11 @@ function validate(f, others, en) {
 }
 
 // Zusammenfassung für die Admins (immer deutsch).
-function summary(f, ip) {
+function summary(f, ip, publicIp) {
   const rows = [
     ['Projektname', f.projektname],
     ['IP-Adresse', ip],
+    ['Öffentliche IP', publicIp],
     ['Typ', f.typ],
     ['CPU / RAM / Disk', `${f.cpu} Kerne / ${f.ram} GB / ${f.disk} GB`],
     ['Internet', f.internet],
@@ -130,7 +174,7 @@ function summary(f, ip) {
   const table = ['| Feld | Wert |', '|---|---|', ...rows.map(([k, v]) => `| ${k} | ${esc(v)} |`)].join('\n');
   const extra = [
     ['Projektbeschreibung', f.projektbeschreibung],
-    ['Teammitglieder', f.team],
+    ['Teammitglieder (Proxmox-Zugriff)', f.team],
     ['Spezielle Anforderungen', f.spezielles],
   ].filter(([, v]) => v).map(([k, v]) => `**${k}:**\n${v}`).join('\n\n');
   return extra ? `${table}\n\n${extra}` : table;
@@ -213,6 +257,6 @@ async function reject(github, context, issue, actor, reason, ipVergabe) {
 }
 
 module.exports = {
-  LABEL, STATUS_LABELS, parseBody, labelNames, isEnglish, wantsInternet, mention, isIPv4,
-  validate, summary, removeLabel, addLabels, comment, upsertComment, hasTriage, reject,
+  LABEL, STATUS_LABELS, APPROVED_LABELS, parseBody, labelNames, isEnglish, wantsInternet, mention, isIPv4,
+  isIPv4Cidr, parseIpCommand, diffFields, validate, summary, removeLabel, addLabels, comment, upsertComment, hasTriage, reject,
 };

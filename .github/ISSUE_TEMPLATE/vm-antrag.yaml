@@ -43,10 +43,10 @@ body:
     id: team
     attributes:
       label: Teammitglieder
-      description: Vor- und Nachname aller, die am Projekt arbeiten.
+      description: Schul-Benutzernamen aller, die am Projekt arbeiten (z.B. `if123456`), einer pro Zeile. Diese Personen bekommen Zugriff auf die Proxmox-Oberfläche und können die VM schulintern administrieren.
       placeholder: |
-        Max Muster
-        Lisa Beispiel
+        if123456
+        it220259
     validations:
       required: true
 

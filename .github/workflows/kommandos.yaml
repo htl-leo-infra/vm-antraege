@@ -54,21 +54,22 @@ jobs:
               if (!labels.includes(a.LABEL.freigegeben)) {
                 return reply(`\`/ip\` geht nur bei Label \`${a.LABEL.freigegeben}\`.`);
               }
-              const m = text.split('\n')[0].match(/^\/ip\s+(\S+)\s*$/);
-              if (!m || !a.isIPv4(m[1])) {
-                return reply('Format: `/ip 10.x.x.x` (eine gültige IPv4-Adresse).');
+              const ip = a.parseIpCommand(text.split('\n')[0]);
+              if (!ip) {
+                return reply('Format: `/ip 10.x.x.x[/prefix]`, optional mit öffentlicher IP: ' +
+                  '`/ip 10.9.32.1/24 public 193.18.22.7/24` (gültige IPv4-Adressen).');
               }
-              const ip = m[1];
               const f = a.parseBody(issue.body);
+              const shown = ip.public ? `${ip.intern}\` / \`${ip.public}` : ip.intern;
 
               await a.removeLabel(github, context, nr, a.LABEL.freigegeben);
               await a.addLabels(github, context, nr, [a.LABEL.ipVergeben]);
               await react('+1');
               await a.comment(github, context, nr,
                 `${a.mention(process.env.VM_ERSTELLUNG)} Bitte VM anlegen und danach Label \`${a.LABEL.erstellt}\` setzen.\n\n` +
-                a.summary(f, ip) + '\n\n---\n\n' +
-                (a.isEnglish(issue) ? `IP address of your VM: \`${ip}\`. The VM will be created next.`
-                                    : `IP-Adresse eurer VM: \`${ip}\`. Als Nächstes wird die VM angelegt.`));
+                a.summary(f, ip.intern, ip.public) + '\n\n---\n\n' +
+                (a.isEnglish(issue) ? `IP address of your VM: \`${shown}\`. The VM will be created next.`
+                                    : `IP-Adresse eurer VM: \`${shown}\`. Als Nächstes wird die VM angelegt.`));
             }
 
             if (cmd === 'ablehnen') {

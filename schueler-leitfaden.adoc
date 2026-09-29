@@ -59,6 +59,29 @@ Der Projektname wird Teil des VM-Namens. Deshalb gelten strenge Regeln:
 Ist der Name ungültig, bekommt euer Issue das Label `ungültig` und einen Hinweis. Korrigiert
 dann einfach das Issue (Menü `…` → _Edit_), es wird automatisch neu geprüft.
 
+== Teammitglieder: Schul-Benutzernamen
+
+Tragt im Feld _Teammitglieder_ die *Schul-Benutzernamen* aller ein, die am Projekt arbeiten —
+einen pro Zeile, klein geschrieben, z.B. `if123456`.
+
+Alle hier eingetragenen Personen bekommen Zugriff auf die *Proxmox-Oberfläche* und können
+eure VM schulintern administrieren (starten, stoppen, Konsole).
+
+[cols="1,3",options="header"]
+|===
+|Kürzel |Abteilung
+
+|`ad` |Abendschule
+|`kd` |Kolleg
+|`if` |Informatik
+|`it` |Medientechnik
+|`el` |Elektronik
+|`bg` |Biomedizin – Gesundheitstechnik – Medizintechnik
+|===
+
+IMPORTANT: Ändert ihr die Teammitglieder nach der Freigabe, werden die Admins automatisch
+benachrichtigt und prüfen die Änderung.
+
 == Ausstattung
 
 Wählt so wenig wie möglich — die Ressourcen teilen sich alle Projekte der Schule.
@@ -88,6 +111,33 @@ Unter welchem Namen soll die VM erreichbar sein, z.B. `notenrechner.htl-leonding
 Eine VM im Internet wird innerhalb von Minuten von fremden Bots angegriffen. Haltet das
 System aktuell, verwendet sichere Passwörter bzw. SSH-Schlüssel und öffnet nur, was nötig ist.
 ====
+
+=== Absicherung und Überwachung
+
+Zur Absicherung und Überwachung helfen zusätzlich einige bewährte Open-Source-Werkzeuge:
+
+https://cisofy.com/lynis/[Lynis]::
+Prüft das System auf Schwachstellen und Konfigurationsfehler und liefert
+Verbesserungsvorschläge.
+
+https://www.clamav.net/[ClamAV]::
+Erkennt Schadsoftware, etwa in Uploads oder Mail-Anhängen.
+
+https://github.com/fail2ban/fail2ban[Fail2Ban]::
+Sperrt IP-Adressen automatisch, wenn sie durch wiederholte fehlgeschlagene Anmeldeversuche
+auffallen.
+
+Web Application Firewall::
+Für Webserver wie Apache und Nginx empfiehlt sich eine Web Application Firewall (z.B.
+https://github.com/owasp-modsecurity/ModSecurity[ModSecurity]) mit den
+https://coreruleset.org/[OWASP Core Rule Sets], die gängige Angriffe wie SQL-Injection oder
+Cross-Site-Scripting abfangen.
+
+SSH-Härtung::
+Schwache SSH-Cipher-Suiten und veraltete Algorithmen deaktivieren, sodass nur moderne, als
+sicher geltende Verfahren zugelassen sind.
+
+NOTE: Diese Maßnahmen ersetzen keine regelmäßige Pflege, erhöhen aber den Schutz deutlich.
 
 == Anmeldung für eure Anwendung (Keycloak)
 

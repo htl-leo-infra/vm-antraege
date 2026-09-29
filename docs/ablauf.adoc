@@ -76,7 +76,7 @@ Die erwähnten Personen kommen aus Repo-Variablen. Ohne Variable gilt der Defaul
 
 |`FREIGABE` |Freigabe des Antrags |`bauepete`
 |`IP_VERGABE` |IP-Adresse eintragen |`htl-leonding` (Platzhalter für Thomas Himmelbauer)
-|`VM_ERSTELLUNG` |VM in Proxmox anlegen („Mailverteiler") |`MWagnerOE5AOO Master-Andi`
+|`VM_ERSTELLUNG` |VM in Proxmox anlegen („Mailverteiler") |`Master-Andi MWagnerOE5AOO`
 |===
 
 [source,bash]
@@ -96,7 +96,8 @@ gh variable set IP_VERGABE -R htl-leo-infra/vm-antraege --body <username>
 . *Doppelte Namen suchen* — alle *offenen* Anträge (außer `abgelehnt`) laden und deren
   Projektnamen und DNS-Namen auslesen.
 . *Prüfen:*
-** *Fehler:* Name ungültig (`^[a-z][a-z0-9-]{2,29}$`) oder bereits vergeben; DNS Name bereits
+** *Fehler:* Teammitglieder leer oder kein gültiger Schul-Benutzername
+   (`^(ad|kd|if|it|el|bg)\d{6}$`, z.B. `if123456`); Name ungültig (`^[a-z][a-z0-9-]{2,29}$`) oder bereits vergeben; DNS Name bereits
    von einem anderen offenen Antrag mit Internet „Yes" belegt; bei Internet
    „Yes" fehlen Ports oder DNS; Portnummer ungültig; DNS kein gültiger Hostname
 ** *Nur Warnung:* Port 22/3306/5432/6379/27017 öffentlich; Ports/DNS angegeben, obwohl
@@ -119,8 +120,15 @@ automatisch setzt. Texte an Schüler*innen sind dann englisch, Texte an Admins i
   Markierung) — kein neuer Kommentar.
 * *Jetzt korrekt:* Label `ungültig` weg, Prüfkommentar zeigt „✅ gültig". Ist noch kein
   Status-Label gesetzt: `status: neu` und Mail an Peter.
-* *Bereits freigegeben und nachträglich bearbeitet:* Es wird nur neu geprüft. Das
-  Status-Label bleibt, *niemand wird benachrichtigt* (siehe <<grenzen>>).
+* *Bereits freigegeben und nachträglich bearbeitet* (Label `status: freigegeben`,
+  `status: ip-vergeben` oder `status: erstellt`): Der Bot vergleicht alten und neuen Stand
+  (`changes.body.from`) und postet an `FREIGABE` und `VM_ERSTELLUNG` eine Tabelle
+  *Feld | vorher | nachher*. Bei geänderten Teammitgliedern zusätzlich
+  „*Teammitglieder geändert → Proxmox-Zugriff prüfen!*". Danach wird normal neu geprüft;
+  das Status-Label bleibt.
+
+IMPORTANT: Die Teammitglieder (Schul-Benutzernamen) bekommen Zugriff auf die Proxmox-Oberfläche.
+Eine Änderung nach der Freigabe muss deshalb immer geprüft werden.
 
 [[freigabe]]
 == Peter gibt frei
@@ -131,7 +139,7 @@ im Team `vm-admins`).
 *Ereignis:* `issues: labeled` → Workflow *Status* (Zweig `status: freigegeben`)
 
 . Label `status: neu` entfernen.
-. Kommentar: `@<IP_VERGABE> Antrag … wurde von @bauepete freigegeben. Bitte /ip 10.x.x.x`
+. Kommentar: `@<IP_VERGABE> Antrag … wurde von @bauepete freigegeben. Bitte /ip 10.x.x.x/24 public x.x.x.x/24`
   und für die Schüler*innen „Euer Antrag wurde freigegeben".
 . *Die Person für die IP-Vergabe bekommt eine Mail.*
 
@@ -145,8 +153,11 @@ NOTE: Der Workflow *Status* startet bei jedem Label, läuft aber nur bei `status
 
 [source,text]
 ----
-/ip 10.0.0.99
+/ip 10.9.32.1/24
+/ip 10.9.32.1/24 public 193.18.22.7/24
 ----
+
+Präfix (`/24`) und öffentliche IP sind optional. Statt `public` geht auch `/public`.
 
 *Ereignis:* `issue_comment: created` → Workflow *Kommandos* (Zweig `/ip`)
 
@@ -154,8 +165,8 @@ NOTE: Der Workflow *Status* startet bei jedem Label, läuft aber nur bei `status
   (z.B. Schüler*innen): nur Log-Eintrag, *kein sichtbarer Kommentar*.
 . *Status prüfen* — Ohne Label `status: freigegeben`: 😕-Reaktion und Hinweis
   „/ip geht nur bei Label status: freigegeben".
-. *IP prüfen* — Nur die erste Zeile zählt, muss eine gültige IPv4-Adresse sein. Sonst 😕
-  und Formathinweis.
+. *IP prüfen* — Nur die erste Zeile zählt: interne IPv4 mit optionalem Präfix (≤ 32),
+  optional `public <IPv4>[/Präfix]`. Sonst 😕 und Formathinweis.
 . *Erfolg:*
 ** Label `status: freigegeben` → `status: ip-vergeben`
 ** 👍-Reaktion auf den Kommentar
@@ -171,7 +182,8 @@ NOTE: Der Workflow *Status* startet bei jedem Label, läuft aber nur bei `status
 
 *Ereignis:* `issues: labeled` → Workflow *Status* (Zweig `status: erstellt`)
 
-. Label `status: ip-vergeben` entfernen.
+. Alle vorherigen Status-Labels entfernen (`status: neu`, `status: freigegeben`,
+  `status: ip-vergeben`) — auch wenn Schritte übersprungen wurden.
 . Kommentar `@<antragsteller*in> 🎉 Eure VM … ist bereit. Zugangsdaten auf anderem Weg …`
 . *Die Antragsteller*in bekommt eine Mail.*
 
@@ -260,9 +272,6 @@ nicht fälschen.
 [[grenzen]]
 == Grenzen und offene Punkte
 
-. *Bearbeitung nach Freigabe* — Schüler*innen können nach der Freigabe z.B. Ports ändern,
-  ohne dass jemand benachrichtigt wird. Geplant: Hinweis an Admins bei Bearbeitung mit
-  Status ≥ `freigegeben`.
 . *Parsing über Überschriften* — Enthält ein Textfeld eine Zeile mit `### …`, wird der Wert
   abgeschnitten. Selten und harmlos.
 . *Team nötig* — Ohne Team `vm-admins` (Rolle Triage) können die Admins weder Labels setzen

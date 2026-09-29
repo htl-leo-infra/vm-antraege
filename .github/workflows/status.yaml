@@ -41,13 +41,16 @@ jobs:
                 await a.removeLabel(github, context, nr, a.LABEL.neu);
                 await a.comment(github, context, nr,
                   `${a.mention(process.env.IP_VERGABE)} Antrag \`${f.projektname}\` wurde von @${context.actor} freigegeben. ` +
-                  'Bitte IP-Adresse eintragen mit einem Kommentar:\n\n```\n/ip 10.x.x.x\n```\n\n' +
+                  'Bitte IP-Adresse eintragen mit einem Kommentar (Präfix und öffentliche IP optional):\n\n```\n/ip 10.x.x.x/24 public x.x.x.x/24\n```\n\n' +
                   (en ? 'Your request has been approved. Next, your VM will get an IP address.'
                       : 'Euer Antrag wurde freigegeben. Als Nächstes bekommt eure VM eine IP-Adresse.'));
                 break;
 
               case a.LABEL.erstellt:
-                await a.removeLabel(github, context, nr, a.LABEL.ipVergeben);
+                // alle vorherigen Status-Labels entfernen, auch wenn Schritte übersprungen wurden
+                for (const l of [a.LABEL.neu, a.LABEL.freigegeben, a.LABEL.ipVergeben]) {
+                  await a.removeLabel(github, context, nr, l);
+                }
                 await a.comment(github, context, nr, `@${issue.user.login} ` + (en
                   ? `🎉 Your VM \`${f.projektname}\` is ready. You will receive the access credentials through a separate channel – never post them here.\n\n` +
                     'When you no longer need the VM, just write a comment here.'

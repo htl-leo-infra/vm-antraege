@@ -15,7 +15,7 @@ Repo: `htl-leo-infra/vm-antraege` (public). Anforderungen: `docs/anforderungen.m
 |---|---|---|
 | Auftraggeber, VM anlegen | Michael Wagner | `MWagnerOE5AOO` |
 | Freigabe | Peter Bauer | `bauepete` |
-| IP-Vergabe | Thomas Himmelbauer | _offen_ |
+| IP-Vergabe (Sysadmin) | Thomas Himmelbauer | _offen_, derzeit `htl-leonding` als Platzhalter |
 | VM anlegen | Andreas Brückner | `Master-Andi` |
 | Repo-Betreuung | Thomas Stütz | `htl-leonding` |
 
@@ -26,7 +26,7 @@ Team `vm-admins` (Rolle Triage): alle obigen. Schüler*innen bearbeiten nur eige
 1. Issue über Formular `.github/ISSUE_TEMPLATE/vm-antrag.yaml` → Label `vm-antrag`
 2. Workflow prüft Projektname (`^[a-z][a-z0-9-]{2,29}$`) → `status: neu` + @bauepete, sonst `ungültig`
 3. Peter setzt `status: freigegeben` → Workflow erwähnt Himmelbauer
-4. Himmelbauer kommentiert `/ip <adresse>` → `status: ip-vergeben` + @MWagnerOE5AOO @Master-Andi
+4. Himmelbauer kommentiert `/ip <intern>[/prefix] [public <öffentlich>[/prefix]]` → `status: ip-vergeben` + @MWagnerOE5AOO @Master-Andi
 5. VM angelegt → Label `status: erstellt` → Workflow informiert Antragsteller*in
 6. Jederzeit vor „erstellt“: `/ablehnen <Begründung>` (oder nur Label `abgelehnt` als Rückfall) → Status-Labels weg, `abgelehnt`, Kommentar, Issue geschlossen
 
@@ -39,6 +39,7 @@ Benachrichtigung ausschließlich per @-Mention (GitHub-Mail), einzelne Personen,
 - Zwei Formulare: `vm-antrag.yaml` (DE) und `vm-request.yaml` (EN, zusätzliches Label `english`). Gleiche Feld-IDs, gleiche Reihenfolge. **Jede Feldänderung in beiden Formularen + Leitfäden (`schueler-leitfaden.adoc`, `schueler-guide.adoc`) + Label-Map im Workflow.**
 - Workflows parsen den Issue-Body über die Feld-Labels (`### Projektname` / `### Project name`) → Map DE/EN-Label → Feld-ID. Bot-Kommentare auf Englisch, wenn Label `english`.
 - Admin-Seite (Status-Labels, `/ip`, Kommentare an Admins) bleibt deutsch.
+- Teammitglieder = Schul-Benutzernamen (`^(ad|kd|if|it|el|bg)\d{6}$`) → Proxmox-Zugriff. Änderungen nach Freigabe werden an Admins gemeldet.
 - Feld-Labels exakt nach Michael Wagners Vorgabe (siehe `docs/anforderungen.md`).
 - YAML-Dateien mit Endung `.yaml` – Ausnahme `.github/ISSUE_TEMPLATE/config.yml` (GitHub erkennt nur `.yml`).
 - Gemeinsame Workflow-Logik in `.github/scripts/antrag.js` (Parser, Validierung, Label-Konstanten, Kommentar-Helfer).

@@ -59,6 +59,29 @@ The project name becomes part of the VM name. Therefore strict rules apply:
 If the name is invalid, your issue gets the label `ungültig` (invalid) and a note. Simply
 correct the issue (menu `…` → _Edit_), it will be checked again automatically.
 
+== Team members: school usernames
+
+In the _Team members_ field, enter the *school usernames* of everyone working on the
+project — one per line, lowercase, e.g. `if123456`.
+
+Everyone listed here gets access to the *Proxmox web interface* and can administer your VM
+within the school network (start, stop, console).
+
+[cols="1,3",options="header"]
+|===
+|Prefix |Department
+
+|`ad` |Evening school (Abendschule)
+|`kd` |College (Kolleg)
+|`if` |Computer Science (Informatik)
+|`it` |Media Technology (Medientechnik)
+|`el` |Electronics (Elektronik)
+|`bg` |Biomedical and Health Engineering (Biomedizin – Gesundheitstechnik – Medizintechnik)
+|===
+
+IMPORTANT: If you change the team members after approval, the admins are notified
+automatically and review the change.
+
 == Resources
 
 Choose as little as possible — all projects of the school share the resources.
@@ -88,6 +111,32 @@ Under which name the VM should be reachable, e.g. `gradecalculator.htl-leonding.
 A VM on the internet is attacked by bots within minutes. Keep the system up to date,
 use strong passwords or SSH keys and open only what is necessary.
 ====
+
+=== Hardening and monitoring
+
+Some proven open-source tools additionally help to secure and monitor your system:
+
+https://cisofy.com/lynis/[Lynis]::
+Audits the system for vulnerabilities and misconfigurations and suggests improvements.
+
+https://www.clamav.net/[ClamAV]::
+Detects malware, e.g. in uploads or mail attachments.
+
+https://github.com/fail2ban/fail2ban[Fail2Ban]::
+Automatically bans IP addresses that stand out through repeated failed login attempts.
+
+Web Application Firewall::
+For web servers such as Apache and Nginx, a web application firewall (e.g.
+https://github.com/owasp-modsecurity/ModSecurity[ModSecurity]) with the
+https://coreruleset.org/[OWASP Core Rule Sets] is recommended. It blocks common attacks
+such as SQL injection or cross-site scripting.
+
+SSH hardening::
+Disable weak SSH cipher suites and outdated algorithms so that only modern procedures
+considered secure are allowed.
+
+NOTE: These measures do not replace regular maintenance, but they increase protection
+considerably.
 
 == Login for your application (Keycloak)
 

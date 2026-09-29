@@ -57,8 +57,15 @@ flowchart LR
 - IP-Adresse (privat) darf im öffentlichen Issue stehen.
 - Zusätzliche Felder: Typ (VM/LXC), CPU-Kerne, RAM, Disk.
 
+## Entscheidungen (29.09.2026, Mail Michael Wagner)
+
+- Sicherheitshinweis im Leitfaden um Werkzeuge erweitert (Lynis, ClamAV, Fail2Ban, ModSecurity + OWASP CRS, SSH-Härtung).
+- Feld **Teammitglieder**: Schul-Benutzernamen statt Namen (z.B. `if123456`; Kürzel ad, kd, if, it, el, bg + 6 Ziffern). Diese Personen bekommen Zugriff auf die Proxmox-GUI.
+- Freigabe: Peter Bauer · IP-Vergabe: Sysadmin (Thomas Himmelbauer, Username folgt, bis dahin `htl-leonding`) · VM anlegen: Andreas Brückner, Michael Wagner.
+- `/ip` akzeptiert Präfix und öffentliche IP (Michaels Test: `/ip 10.9.32.1/24 /public 193.18.22.7/24`).
+
 ## Offene Punkte
 
-- [ ] GitHub-Username von Thomas Himmelbauer
+- [ ] GitHub-Username von Thomas Himmelbauer (dann `IP_VERGABE` setzen und ins Team einladen)
 - [ ] Stufen für CPU/RAM/Disk mit Michael abstimmen (derzeit 1/2/4 Kerne, 1/2/4/8 GB RAM, 10/20/50 GB Disk)
 - [ ] Echter Mailverteiler später? (Office365 via Graph API mit Funktionspostfach, Schul-IT)
