@@ -24,12 +24,12 @@ Lies zuerst `CLAUDE.md` und `docs/anforderungen.md`.
   - `status.yaml` – Label `status: freigegeben` → @IP_VERGABE · `status: erstellt` → Nachricht an Antragsteller*in · `abgelehnt` → Ablehnung ohne Begründung (Rückfall)
   - `kommandos.yaml` – nur Triage+: `/ip x.x.x.x` → `status: ip-vergeben` + Zusammenfassung an @VM_ERSTELLUNG · `/ablehnen <Begründung>` → Ablehnung mit Begründung
   - Ablehnung (`reject()` in `antrag.js`): Status-Labels weg, `abgelehnt`, Kommentar, schließen (not planned); bei `ip-vergeben` @IP_VERGABE; bei `erstellt` nur Hinweis, nicht schließen
-- Repo-Variablen **gesetzt (29.09.)**: `FREIGABE`=bauepete, `IP_VERGABE`=htl-leonding (Platzhalter Sysadmin Himmelbauer), `VM_ERSTELLUNG`=`Master-Andi MWagnerOE5AOO`
+- Repo-Variablen **gesetzt (29.09.)**: `FREIGABE`=bauepete, `IP_VERGABE`=ghbugfinder (Sysadmin Himmelbauer, ab 30.09.), `VM_ERSTELLUNG`=`Master-Andi MWagnerOE5AOO`
 - End-to-End-Test bestanden (Issues #1, #2, geschlossen „not planned“); Test-Variablen gelöscht
 - Workflows zusammengelegt (freigabe/erstellt/ip-eintragen → status + kommandos), `/ablehnen` ergänzt – end-to-end getestet (#3–#5); nur „Ablehnen bei erstellt“ lediglich lokal getestet
 - DNS Name muss unter offenen Anträgen mit Internet „Yes“ eindeutig sein
 - Actions: `checkout@v7`, `github-script@v9`
-- Team `vm-admins` (Triage auf vm-antraege) angelegt: `htl-leonding` (Maintainer), `MWagnerOE5AOO` (aktiv, hat getestet: #8, #9); `bauepete`, `Master-Andi` eingeladen (29.09., pending)
+- Team `vm-admins` (Triage auf vm-antraege) angelegt: `htl-leonding` (Maintainer), `MWagnerOE5AOO` (aktiv, hat getestet: #8, #9); `bauepete`, `Master-Andi` eingeladen (29.09., pending), `ghbugfinder` eingeladen (30.09., pending)
 - Mail Michael 29.09. umgesetzt: Leitfaden-Abschnitt „Absicherung und Überwachung“ (DE/EN); Teammitglieder = Schul-Benutzernamen (`^(ad|kd|if|it|el|bg)\d{6}$`) mit Validierung; Hinweis an Admins bei Änderung nach Freigabe (Diff-Tabelle); `/ip` mit Präfix + optional `public <ip>`; `status: erstellt` entfernt alle vorherigen Status-Labels
 
 ## Nächste Schritte
@@ -51,9 +51,9 @@ gh api -X PATCH orgs/htl-leo-infra -F members_can_create_repositories=false
 - Ohne Team können Peter & Co. keine Labels setzen und kein `/ip` ausführen.
 
 ### Weitere offene Punkte
-- GitHub-Username Thomas Himmelbauer → ins Team einladen + `gh variable set IP_VERGABE -R htl-leo-infra/vm-antraege --body <user>`
 - Optional d): `members_can_create_repositories=false`
 - Nicht getestet: `/ip`/`/ablehnen` von Nicht-Admin wird ignoriert (braucht zweiten Account)
+- Einladungen angenommen? `gh api orgs/htl-leo-infra/invitations`
 - Stufen CPU/RAM/Disk mit Michael Wagner abstimmen
 - „Löschen nach Nutzungsdauer“ (Leitfaden) mit Michael abstimmen
 - Echter Mailverteiler später (Office365 via Graph API, Funktionspostfach, Schul-IT)

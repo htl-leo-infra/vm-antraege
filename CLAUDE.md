@@ -15,7 +15,7 @@ Repo: `htl-leo-infra/vm-antraege` (public). Anforderungen: `docs/anforderungen.m
 |---|---|---|
 | Auftraggeber, VM anlegen | Michael Wagner | `MWagnerOE5AOO` |
 | Freigabe | Peter Bauer | `bauepete` |
-| IP-Vergabe (Sysadmin) | Thomas Himmelbauer | _offen_, derzeit `htl-leonding` als Platzhalter |
+| IP-Vergabe (Sysadmin) | Thomas Himmelbauer | `ghbugfinder` |
 | VM anlegen | Andreas Brückner | `Master-Andi` |
 | Repo-Betreuung | Thomas Stütz | `htl-leonding` |
 

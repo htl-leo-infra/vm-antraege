@@ -27,7 +27,7 @@ jobs:
 
       - uses: actions/github-script@v9
         env:
-          IP_VERGABE: ${{ vars.IP_VERGABE || 'htl-leonding' }}
+          IP_VERGABE: ${{ vars.IP_VERGABE || 'ghbugfinder' }}
         with:
           script: |
             const a = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/antrag.js`);

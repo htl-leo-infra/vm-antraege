@@ -75,7 +75,7 @@ Die erwähnten Personen kommen aus Repo-Variablen. Ohne Variable gilt der Defaul
 |Variable |Aufgabe |Default
 
 |`FREIGABE` |Freigabe des Antrags |`bauepete`
-|`IP_VERGABE` |IP-Adresse eintragen |`htl-leonding` (Platzhalter für Thomas Himmelbauer)
+|`IP_VERGABE` |IP-Adresse eintragen (Sysadmin Thomas Himmelbauer) |`ghbugfinder`
 |`VM_ERSTELLUNG` |VM in Proxmox anlegen („Mailverteiler") |`Master-Andi MWagnerOE5AOO`
 |===
 

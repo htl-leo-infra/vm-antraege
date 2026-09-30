@@ -29,7 +29,7 @@ jobs:
 
       - uses: actions/github-script@v9
         env:
-          IP_VERGABE: ${{ vars.IP_VERGABE || 'htl-leonding' }}
+          IP_VERGABE: ${{ vars.IP_VERGABE || 'ghbugfinder' }}
           VM_ERSTELLUNG: ${{ vars.VM_ERSTELLUNG || 'MWagnerOE5AOO Master-Andi' }}
         with:
           script: |
