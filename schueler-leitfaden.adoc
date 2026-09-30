@@ -110,32 +110,109 @@ Unter welchem Namen soll die VM erreichbar sein, z.B. `notenrechner.htl-leonding
 ====
 Eine VM im Internet wird innerhalb von Minuten von fremden Bots angegriffen. Haltet das
 System aktuell, verwendet sichere Passwörter bzw. SSH-Schlüssel und öffnet nur, was nötig ist.
+Siehe <<security>>.
 ====
 
-=== Absicherung und Überwachung
+[[security]]
+== Security: Werkzeuge für den Servergrundschutz
 
-Zur Absicherung und Überwachung helfen zusätzlich einige bewährte Open-Source-Werkzeuge:
+[NOTE]
+====
+Ergänzung zu den PowerPoint-Folien aus dem Netzwerktechnik-Unterricht (Kapitel Servergrundschutz/Härtung). Diese Anleitung ersetzt die Folien nicht, sondern zeigt die praktische Anwendung der dort besprochenen Werkzeuge.
+====
 
-https://cisofy.com/lynis/[Lynis]::
-Prüft das System auf Schwachstellen und Konfigurationsfehler und liefert
-Verbesserungsvorschläge.
+=== Installation: LXC-Container vs. VM
 
-https://www.clamav.net/[ClamAV]::
-Erkennt Schadsoftware, etwa in Uploads oder Mail-Anhängen.
+[cols="1,1,1", options="header"]
+|===
+| |LXC-Container |VM
 
-https://github.com/fail2ban/fail2ban[Fail2Ban]::
-Sperrt IP-Adressen automatisch, wenn sie durch wiederholte fehlgeschlagene Anmeldeversuche
-auffallen.
+|Lynis, Fail2Ban, ClamAV
+|*Automatisch* – wird beim Anlegen des Containers mitinstalliert
+|*Manuell* – muss vom Nutzer der VM selbst eingerichtet werden
+|===
 
-Web Application Firewall::
-Für Webserver wie Apache und Nginx empfiehlt sich eine Web Application Firewall (z.B.
-https://github.com/owasp-modsecurity/ModSecurity[ModSecurity]) mit den
-https://coreruleset.org/[OWASP Core Rule Sets], die gängige Angriffe wie SQL-Injection oder
-Cross-Site-Scripting abfangen.
+Bei einem LXC-Container musst du die drei Grundwerkzeuge also nicht selbst installieren, nur konfigurieren und regelmäßig nutzen. Bei einer VM übernimmst du Installation und Konfiguration komplett selbst.
 
-SSH-Härtung::
-Schwache SSH-Cipher-Suiten und veraltete Algorithmen deaktivieren, sodass nur moderne, als
-sicher geltende Verfahren zugelassen sind.
+=== Lynis – Sicherheits-Audit
+
+Prüft das System auf Fehlkonfigurationen, veraltete Software und Härtungsmöglichkeiten.
+
+[source,bash]
+----
+sudo apt install lynis        # nur bei VM nötig, bei LXC bereits vorhanden
+sudo lynis audit system
+----
+
+Ergebnis: ein „Hardening Index" sowie eine Liste konkreter Empfehlungen. Report liegt unter `/var/log/lynis.log` bzw. `/var/log/lynis-report.dat`. Regelmäßig (z. B. monatlich) erneut ausführen und Empfehlungen abarbeiten.
+
+=== ClamAV – Virenscanner
+
+Erkennt Schadsoftware, etwa in Uploads, Mail-Anhängen oder freigegebenen Verzeichnissen.
+
+[source,bash]
+----
+sudo apt install clamav clamav-daemon   # nur bei VM nötig, bei LXC bereits vorhanden
+sudo freshclam                          # Signaturen aktualisieren
+sudo clamscan -r /pfad/zu/pruefen       # manueller Scan, rekursiv
+----
+
+Für laufenden Schutz `clamav-daemon` aktivieren und z. B. per Cronjob regelmäßig scannen lassen.
+
+=== Fail2Ban – Schutz vor Brute-Force
+
+Sperrt IP-Adressen automatisch nach mehreren fehlgeschlagenen Anmeldeversuchen (SSH, Webserver-Logins etc.).
+
+[source,bash]
+----
+sudo apt install fail2ban       # nur bei VM nötig, bei LXC bereits vorhanden
+sudo systemctl enable --now fail2ban
+----
+
+Konfiguration in `/etc/fail2ban/jail.local` (nicht die Originaldatei `jail.conf` editieren). Status prüfen:
+
+[source,bash]
+----
+sudo fail2ban-client status
+sudo fail2ban-client status sshd
+----
+
+=== WAF für Apache und Nginx (OWASP Core Rule Set)
+
+Eine Web Application Firewall filtert Angriffe wie SQL-Injection oder Cross-Site-Scripting, bevor sie die Anwendung erreichen. Basis ist *ModSecurity* mit dem *OWASP Core Rule Set (CRS)*.
+
+==== Apache
+
+[source,bash]
+----
+sudo apt install libapache2-mod-security2
+sudo a2enmod security2
+sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
+# SecRuleEngine auf "On" setzen, OWASP CRS herunterladen und einbinden
+sudo systemctl restart apache2
+----
+
+==== Nginx
+
+Nginx bringt ModSecurity nicht mit, es braucht das ModSecurity-Nginx-Connector-Modul (kompiliert oder über ein fertiges Paket der Distribution) plus dieselben OWASP-CRS-Regeln.
+
+[IMPORTANT]
+====
+Nach der Einrichtung immer zuerst im *Detection-Only-Modus* testen, bevor auf „Blocking" umgestellt wird, um Fehlalarme bei der eigenen Anwendung auszuschließen.
+====
+
+=== SSH-Härtung
+
+Schwache SSH-Cipher-Suiten und veraltete Algorithmen deaktivieren, sodass nur moderne, als sicher geltende Verfahren zugelassen sind.
+
+=== Ablaufempfehlung für den Alltag
+
+. Lynis-Audit ausführen, Empfehlungen priorisieren und abarbeiten
+. ClamAV-Signaturen aktuell halten, regelmäßige Scans einplanen
+. Fail2Ban-Status kontrollieren, Jail-Regeln bei Bedarf anpassen
+. WAF-Logs auf geblockte Angriffe sichten
+
+Details zu den zugrunde liegenden Konzepten (Angriffsflächen, Härtung, Defense in Depth) siehe die PowerPoint-Folien aus dem Netzwerktechnik-Unterricht.
 
 NOTE: Diese Maßnahmen ersetzen keine regelmäßige Pflege, erhöhen aber den Schutz deutlich.
 

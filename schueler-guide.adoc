@@ -109,31 +109,109 @@ Under which name the VM should be reachable, e.g. `gradecalculator.htl-leonding.
 [WARNING]
 ====
 A VM on the internet is attacked by bots within minutes. Keep the system up to date,
-use strong passwords or SSH keys and open only what is necessary.
+use strong passwords or SSH keys and open only what is necessary. See <<security>>.
 ====
 
-=== Hardening and monitoring
+[[security]]
+== Security: tools for basic server protection
 
-Some proven open-source tools additionally help to secure and monitor your system:
+[NOTE]
+====
+Supplement to the PowerPoint slides from the network technology lessons (chapter basic server protection/hardening). This guide does not replace the slides, but shows the practical use of the tools discussed there.
+====
 
-https://cisofy.com/lynis/[Lynis]::
-Audits the system for vulnerabilities and misconfigurations and suggests improvements.
+=== Installation: LXC container vs. VM
 
-https://www.clamav.net/[ClamAV]::
-Detects malware, e.g. in uploads or mail attachments.
+[cols="1,1,1", options="header"]
+|===
+| |LXC container |VM
 
-https://github.com/fail2ban/fail2ban[Fail2Ban]::
-Automatically bans IP addresses that stand out through repeated failed login attempts.
+|Lynis, Fail2Ban, ClamAV
+|*Automatic* – installed when the container is created
+|*Manual* – must be set up by the user of the VM
+|===
 
-Web Application Firewall::
-For web servers such as Apache and Nginx, a web application firewall (e.g.
-https://github.com/owasp-modsecurity/ModSecurity[ModSecurity]) with the
-https://coreruleset.org/[OWASP Core Rule Sets] is recommended. It blocks common attacks
-such as SQL injection or cross-site scripting.
+With an LXC container you do not have to install the three basic tools yourself, only configure and use them regularly. With a VM you take care of installation and configuration completely yourself.
 
-SSH hardening::
-Disable weak SSH cipher suites and outdated algorithms so that only modern procedures
-considered secure are allowed.
+=== Lynis – security audit
+
+Checks the system for misconfigurations, outdated software and hardening opportunities.
+
+[source,bash]
+----
+sudo apt install lynis        # only needed for a VM, already present in LXC
+sudo lynis audit system
+----
+
+Result: a "Hardening Index" and a list of concrete recommendations. The report is located at `/var/log/lynis.log` or `/var/log/lynis-report.dat`. Run it again regularly (e.g. monthly) and work through the recommendations.
+
+=== ClamAV – virus scanner
+
+Detects malware, e.g. in uploads, mail attachments or shared directories.
+
+[source,bash]
+----
+sudo apt install clamav clamav-daemon   # only needed for a VM, already present in LXC
+sudo freshclam                          # update signatures
+sudo clamscan -r /path/to/check         # manual scan, recursive
+----
+
+For continuous protection, enable `clamav-daemon` and schedule regular scans, e.g. via cron job.
+
+=== Fail2Ban – protection against brute force
+
+Automatically bans IP addresses after several failed login attempts (SSH, web server logins etc.).
+
+[source,bash]
+----
+sudo apt install fail2ban       # only needed for a VM, already present in LXC
+sudo systemctl enable --now fail2ban
+----
+
+Configuration in `/etc/fail2ban/jail.local` (do not edit the original file `jail.conf`). Check the status:
+
+[source,bash]
+----
+sudo fail2ban-client status
+sudo fail2ban-client status sshd
+----
+
+=== WAF for Apache and Nginx (OWASP Core Rule Set)
+
+A web application firewall filters attacks such as SQL injection or cross-site scripting before they reach the application. It is based on *ModSecurity* with the *OWASP Core Rule Set (CRS)*.
+
+==== Apache
+
+[source,bash]
+----
+sudo apt install libapache2-mod-security2
+sudo a2enmod security2
+sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
+# set SecRuleEngine to "On", download and include the OWASP CRS
+sudo systemctl restart apache2
+----
+
+==== Nginx
+
+Nginx does not ship with ModSecurity; it needs the ModSecurity-nginx connector module (compiled or via a ready-made distribution package) plus the same OWASP CRS rules.
+
+[IMPORTANT]
+====
+After setting it up, always test in *detection-only mode* first before switching to "blocking", to rule out false positives in your own application.
+====
+
+=== SSH hardening
+
+Disable weak SSH cipher suites and outdated algorithms so that only modern procedures considered secure are allowed.
+
+=== Recommended routine
+
+. Run a Lynis audit, prioritize and work through the recommendations
+. Keep ClamAV signatures up to date, schedule regular scans
+. Check the Fail2Ban status, adjust jail rules if needed
+. Review WAF logs for blocked attacks
+
+For details on the underlying concepts (attack surfaces, hardening, defense in depth) see the PowerPoint slides from the network technology lessons.
 
 NOTE: These measures do not replace regular maintenance, but they increase protection
 considerably.
