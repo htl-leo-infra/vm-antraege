@@ -29,7 +29,8 @@ Lies zuerst `CLAUDE.md` und `docs/anforderungen.md`.
 - Workflows zusammengelegt (freigabe/erstellt/ip-eintragen → status + kommandos), `/ablehnen` ergänzt – end-to-end getestet (#3–#5); nur „Ablehnen bei erstellt“ lediglich lokal getestet
 - DNS Name muss unter offenen Anträgen mit Internet „Yes“ eindeutig sein
 - Actions: `checkout@v7`, `github-script@v9`
-- Team `vm-admins` (Triage auf vm-antraege) angelegt: `htl-leonding` (Maintainer), `MWagnerOE5AOO` (aktiv, hat getestet: #8, #9); `bauepete`, `Master-Andi` eingeladen (29.09., pending), `ghbugfinder` eingeladen (30.09., pending)
+- Team `vm-admins` (Triage auf vm-antraege), Stand 01.10.: aktiv `htl-leonding` (Maintainer), `MWagnerOE5AOO` (hat getestet: #8, #9), `bauepete`, `Master-Andi`; **`ghbugfinder` (Sysadmin Himmelbauer) eingeladen 30.09., noch nicht angenommen** – bis dahin wird sein `/ip` ignoriert, Michael kann einspringen
+- Leitfäden DE/EN: eigener Abschnitt `[[security]]` „Security“ aus Michaels Kurzanleitung (Lynis, ClamAV, Fail2Ban, WAF Apache/Nginx, SSH-Härtung, Ablaufempfehlung); „Backup-Prozess“ umformuliert zu „beim Anlegen des Containers mitinstalliert“ (30.09.)
 - Mail Michael 29.09. umgesetzt: Leitfaden-Abschnitt „Absicherung und Überwachung“ (DE/EN); Teammitglieder = Schul-Benutzernamen (`^(ad|kd|if|it|el|bg)\d{6}$`) mit Validierung; Hinweis an Admins bei Änderung nach Freigabe (Diff-Tabelle); `/ip` mit Präfix + optional `public <ip>`; `status: erstellt` entfernt alle vorherigen Status-Labels
 
 ## Nächste Schritte
@@ -53,7 +54,7 @@ gh api -X PATCH orgs/htl-leo-infra -F members_can_create_repositories=false
 ### Weitere offene Punkte
 - Optional d): `members_can_create_repositories=false`
 - Nicht getestet: `/ip`/`/ablehnen` von Nicht-Admin wird ignoriert (braucht zweiten Account)
-- Einladungen angenommen? `gh api orgs/htl-leo-infra/invitations`
+- Einladung `ghbugfinder` angenommen? `gh api orgs/htl-leo-infra/invitations`
 - Stufen CPU/RAM/Disk mit Michael Wagner abstimmen
 - „Löschen nach Nutzungsdauer“ (Leitfaden) mit Michael abstimmen
 - Echter Mailverteiler später (Office365 via Graph API, Funktionspostfach, Schul-IT)
