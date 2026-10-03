@@ -1,0 +1,77 @@
+name: Ablauf
+
+# Täglich: Nutzungsdauer erstellter VMs prüfen.
+#   30 Tage vorher → Label „läuft ab“, Erinnerung an Antragsteller*in und Lehrkraft
+#   Ablauftag      → Label „abgelaufen“, Hinweis an Lehrkraft und VM_ERSTELLUNG (keine automatische Löschung)
+# Ablaufdatum = Marker <!-- ablauf: JJJJ-MM-TT --> im letzten Bot-Kommentar (status.yaml, /verlaengern).
+
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ablauf
+
+jobs:
+  ablauf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - uses: actions/github-script@v9
+        env:
+          VM_ERSTELLUNG: ${{ vars.VM_ERSTELLUNG || 'Master-Andi MWagnerOE5AOO' }}
+        with:
+          script: |
+            const a = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/antrag.js`);
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              ...context.repo, labels: `${a.LABEL.antrag},${a.LABEL.erstellt}`, state: 'open', per_page: 100,
+            });
+
+            for (const issue of issues.filter((i) => !i.pull_request)) {
+              const nr = issue.number;
+              const en = a.isEnglish(issue);
+              const labels = a.labelNames(issue);
+              const f = a.parseBody(issue.body);
+              const teacher = a.teacherLogin(f);
+              const tm = teacher ? ` @${teacher}` : '';
+
+              let expiry = await a.findExpiry(github, context, nr);
+              if (!expiry) {
+                // ältere Anträge ohne Ablaufdatum: ab heute nachtragen
+                expiry = a.addMonths(a.today(), a.EXPIRY_MONTHS);
+                await a.comment(github, context, nr, `@${issue.user.login} ` + (en
+                  ? `⏳ Expiry date of the VM \`${f.projektname}\`: **${a.formatDate(expiry, true)}**.`
+                  : `⏳ Ablaufdatum der VM \`${f.projektname}\`: **${a.formatDate(expiry, false)}**.`) +
+                  `\n${a.expiryMarker(expiry)}`);
+                core.info(`#${nr}: Ablaufdatum ${expiry} nachgetragen`);
+                continue;
+              }
+
+              const days = a.daysUntil(expiry);
+              const date = a.formatDate(expiry, en);
+              core.info(`#${nr}: läuft am ${expiry} ab (${days} Tage)`);
+
+              if (days <= 0 && !labels.includes(a.LABEL.abgelaufen)) {
+                await a.removeLabel(github, context, nr, a.LABEL.laeuftAb);
+                await a.addLabels(github, context, nr, [a.LABEL.abgelaufen]);
+                await a.comment(github, context, nr, `@${issue.user.login} ` + (en
+                  ? `⌛ The VM \`${f.projektname}\` expired on **${date}** and will be deleted.`
+                  : `⌛ Die VM \`${f.projektname}\` ist am **${date}** abgelaufen und wird gelöscht.`) +
+                  `\n\n---\n\n${a.mention(process.env.VM_ERSTELLUNG)}${tm} Nutzungsdauer abgelaufen. ` +
+                  'Lehrkraft: noch benötigt → `/verlaengern [Monate]`. Admins: sonst VM in Proxmox löschen und Issue schließen.');
+              } else if (days > 0 && days <= a.EXPIRY_WARN_DAYS && !labels.includes(a.LABEL.laeuftAb) && !labels.includes(a.LABEL.abgelaufen)) {
+                await a.addLabels(github, context, nr, [a.LABEL.laeuftAb]);
+                await a.comment(github, context, nr, `@${issue.user.login}${tm} ` + (en
+                  ? `⏳ The VM \`${f.projektname}\` expires on **${date}** (in ${days} days). If you still need it, ask your supervising teacher to comment \`/verlaengern\`.`
+                  : `⏳ Die VM \`${f.projektname}\` läuft am **${date}** ab (in ${days} Tagen). Braucht ihr sie noch, bittet eure betreuende Lehrkraft, \`/verlaengern\` zu kommentieren.`) +
+                  '\n\nLehrkraft: `/verlaengern` verlängert um 12 Monate, `/verlaengern 6` um 6 Monate.');
+              }
+            }

@@ -34,8 +34,9 @@ body:
   - type: input
     id: lehrkraft
     attributes:
-      label: Betreuende Lehrkraft
-      placeholder: Maria Muster
+      label: GitHub-Name der betreuenden Lehrkraft
+      description: GitHub-Benutzername (nicht der echte Name) eurer betreuenden Lehrkraft. Sie wird benachrichtigt und muss den Antrag als Erste freigeben.
+      placeholder: maria-muster
     validations:
       required: true
 
@@ -54,7 +55,7 @@ body:
     id: nutzungsdauer
     attributes:
       label: Nutzungsdauer
-      description: Wie lange wird die VM benötigt? Wann kann sie gelöscht werden?
+      description: Wie lange wird die VM benötigt? Wann kann sie gelöscht werden? Die VM läuft automatisch 1 Jahr nach der Erstellung ab, eure betreuende Lehrkraft kann verlängern.
       placeholder: bis Ende Juni 2027
     validations:
       required: true

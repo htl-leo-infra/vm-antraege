@@ -33,17 +33,23 @@ Lies zuerst `CLAUDE.md` und `docs/anforderungen.md`.
 - Leitfäden DE/EN: eigener Abschnitt `[[security]]` „Security“ aus Michaels Kurzanleitung (Lynis, ClamAV, Fail2Ban, WAF Apache/Nginx, SSH-Härtung, Ablaufempfehlung); „Backup-Prozess“ umformuliert zu „beim Anlegen des Containers mitinstalliert“ (30.09.)
 - Mail Michael 29.09. umgesetzt: Leitfaden-Abschnitt „Absicherung und Überwachung“ (DE/EN); Teammitglieder = Schul-Benutzernamen (`^(ad|kd|if|it|el|bg)\d{6}$`) mit Validierung; Hinweis an Admins bei Änderung nach Freigabe (Diff-Tabelle); `/ip` mit Präfix + optional `public <ip>`; `status: erstellt` entfernt alle vorherigen Status-Labels
 - Mail Michael 02.10. (nach Vorstellung) in `docs/anforderungen.md` dokumentiert (Originaltext + Umsetzungspunkte); Entscheidungen 03.10.: Lehrkraft-Freigabe per Kommando `/freigeben`, Feld „Nutzungsdauer“ bleibt vorläufig (nur Info); Ablauf/Verlängerung festgelegt (30 Tage Vorwarnung, ohne Abstimmung mit Michael); Labels `status: betreuer-freigegeben`, `status: av-freigegeben`
+- Mit Michael nichts mehr offen (Stufen CPU/RAM/Disk akzeptiert, 03.10.)
 - Stand 03.10.: Issue #12 `[VM] meine-erste-vm` offen mit `status: erstellt` (Test oder echt? klären)
 
 ## Nächste Schritte
 
-### Schritt 5: Anforderungen Mail Michael 02.10. umsetzen (siehe `docs/anforderungen.md`)
-Jede Feldänderung in beiden Formularen + Leitfäden DE/EN + Label-Map in `antrag.js`.
-1. Feld „Betreuende Lehrkraft“ → GitHub-Username (Prüfung, ob Account existiert); Lehrkraft per @-Mention benachrichtigen
-2. Zweistufige Freigabe: `/freigeben` (nur eingetragene Lehrkraft) → Label `status: betreuer-freigegeben`, danach Peter → Label `status: av-freigegeben` (ersetzt `status: freigegeben`); erst dann IP-Vergabe
-3. Security-Checkliste (Lynis, Fail2Ban, ClamAV, WAF, SSH-Härtung) als Kommentar bei `status: erstellt`
-4. Nutzungsdauer Standard 1 Jahr, `/verlaengern [Monate]` + täglicher Workflow `ablauf.yaml` (Labels `läuft ab`, `abgelaufen`) – festgelegt, siehe `docs/anforderungen.md`
-5. ✅ DNS-Domain: keine Domain-Einschränkung vorhanden (nur Hostname-Format + Eindeutigkeit) – keine Änderung nötig
+### Schritt 5: Anforderungen Mail Michael 02.10. – ✅ umgesetzt (03.10.), Live-Test offen
+Umgesetzt (Details `docs/ablauf.adoc`, Simulation mit gemocktem API lokal bestanden):
+1. Feld „GitHub-Name der betreuenden Lehrkraft“ (alte Feld-Labels bleiben in der Map); Prüfung: gültiger Username, existiert (API), ≠ Antragsteller*in; Lehrkraft wird erwähnt, bei Wechsel vor Freigabe die neue
+2. `/freigeben` (Lehrkraft oder Triage stellvertretend) → `status: betreuer-freigegeben` + @FREIGABE; Peter setzt `status: av-freigegeben` (normal danach, darf aber auch direkt – Vermerk im Kommentar); `/ip` nur bei `av-freigegeben`; Lehrkraft darf auch `/ablehnen`
+3. Security-Checkliste wird bei `status: erstellt` an den Issue-Body gehängt (Marker `<!-- vm-antrag:security -->`), Schüler*innen haken selbst ab
+4. Ablaufdatum +12 Monate (Marker `<!-- ablauf: JJJJ-MM-TT -->` im letzten Bot-Kommentar); `/verlaengern [1–12]` (Lehrkraft/Triage); `ablauf.yaml` täglich 05:17 UTC: ≤30 Tage → `läuft ab`, Ablauftag → `abgelaufen` + @VM_ERSTELLUNG, keine Auto-Löschung; Anträge ohne Marker (z.B. #12) bekommen beim ersten Lauf heute+12 Monate
+5. ✅ DNS-Domain: keine Domain-Einschränkung vorhanden – keine Änderung nötig
+
+Noch zu tun:
+- Labels (gh API, nach OK): `status: freigegeben` → `status: av-freigegeben` umbenennen; neu `status: betreuer-freigegeben`, `läuft ab`, `abgelaufen`
+- End-to-End-Test live (Variablen auf `htl-leonding` setzen; Lehrkraft-Schritt mit zweitem Account oder `/freigeben` als Triage)
+- Peter, Lehrkräfte informieren: neuer Ablauf, Peter setzt jetzt `status: av-freigegeben`
 
 ### Schritt 4: Team `vm-admins` – ✅ weitgehend erledigt (Befehle zur Referenz)
 Befehle vorbereitet, **noch nicht ausführen**:
@@ -63,9 +69,7 @@ gh api -X PATCH orgs/htl-leo-infra -F members_can_create_repositories=false
 
 ### Weitere offene Punkte
 - Optional d): `members_can_create_repositories=false`
-- Nicht getestet: `/ip`/`/ablehnen` von Nicht-Admin wird ignoriert (braucht zweiten Account)
+- Nicht live getestet: Kommandos von Nicht-Berechtigten werden ignoriert (braucht zweiten Account; in Simulation ok)
 - Einladung `ghbugfinder` angenommen? `gh api orgs/htl-leo-infra/invitations`
-- Stufen CPU/RAM/Disk mit Michael Wagner abstimmen
-- Leitfaden „Löschen nach Nutzungsdauer“ bei Umsetzung von Schritt 5.4 anpassen
 - Echter Mailverteiler später (Office365 via Graph API, Funktionspostfach, Schul-IT)
 - Später: automatische VM-Erstellung (Self-hosted Runner im Schulnetz + Proxmox-API)

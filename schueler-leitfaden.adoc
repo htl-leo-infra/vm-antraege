@@ -82,6 +82,18 @@ eure VM schulintern administrieren (starten, stoppen, Konsole).
 IMPORTANT: Ändert ihr die Teammitglieder nach der Freigabe, werden die Admins automatisch
 benachrichtigt und prüfen die Änderung.
 
+[[lehrkraft]]
+== Betreuende Lehrkraft: GitHub-Name
+
+Tragt im Feld _GitHub-Name der betreuenden Lehrkraft_ den *GitHub-Benutzernamen* eurer
+betreuenden Lehrkraft ein, nicht ihren echten Namen. Fragt sie vorher danach.
+
+* Die Lehrkraft wird im Issue erwähnt und bekommt eine Mail von GitHub.
+* Sie gibt euren Antrag *als Erste* frei, mit dem Kommentar `/freigeben`. Erst danach prüft
+  die Abteilung.
+* Ihr könnt euch nicht selbst eintragen. Gibt es den Namen auf GitHub nicht, wird der
+  Antrag `ungültig`.
+
 == Ausstattung
 
 Wählt so wenig wie möglich — die Ressourcen teilen sich alle Projekte der Schule.
@@ -214,6 +226,12 @@ Schwache SSH-Cipher-Suiten und veraltete Algorithmen deaktivieren, sodass nur mo
 
 Details zu den zugrunde liegenden Konzepten (Angriffsflächen, Härtung, Defense in Depth) siehe die PowerPoint-Folien aus dem Netzwerktechnik-Unterricht.
 
+=== Security-Checkliste im Issue
+
+Sobald eure VM erstellt ist, hängt der Bot eine *Security-Checkliste* an euren Antrag:
+Lynis, Fail2Ban, ClamAV, WAF und SSH-Härtung. Hakt jeden Punkt ab, sobald er erledigt ist
+(Kästchen anklicken). So sehen auch die Admins, wie weit ihr seid.
+
 NOTE: Diese Maßnahmen ersetzen keine regelmäßige Pflege, erhöhen aber den Schutz deutlich.
 
 == Anmeldung für eure Anwendung (Keycloak)
@@ -232,20 +250,34 @@ link:https://github.com/htl-leonding-college/keycloak-antraege[keycloak-antraege
 
 == Ablauf nach dem Antrag
 
-. Ihr stellt den Antrag — Label `status: neu`.
-. Der Antrag wird geprüft und freigegeben — Label `status: freigegeben`.
+. Ihr stellt den Antrag — Label `status: neu`. Eure betreuende Lehrkraft wird benachrichtigt.
+. Eure Lehrkraft gibt frei (`/freigeben`) — Label `status: betreuer-freigegeben`.
+. Die Abteilung gibt frei — Label `status: av-freigegeben`.
 . Die VM bekommt eine IP-Adresse, sie steht als Kommentar im Issue — Label `status: ip-vergeben`.
-. Die VM wird angelegt — Label `status: erstellt`, ihr bekommt eine Nachricht im Issue. Die Zugangsdaten kommen auf einem anderen Weg.
+. Die VM wird angelegt — Label `status: erstellt`, ihr bekommt eine Nachricht im Issue mit dem
+  Ablaufdatum. Am Ende eures Antrags steht dann die Security-Checkliste. Die Zugangsdaten
+  kommen auf einem anderen Weg.
 
 Wird euer Antrag abgelehnt, bekommt ihr die Begründung als Kommentar und das Issue wird
 geschlossen (Label `abgelehnt`). Ihr könnt dann einen neuen, korrigierten Antrag stellen.
 
 Fragen stellt ihr als Kommentar direkt in eurem Issue.
 
+[[nutzungsdauer]]
+== Nutzungsdauer und Verlängerung
+
+Eure VM läuft *1 Jahr nach der Erstellung* ab. Das Ablaufdatum steht im Issue. Das Feld
+_Nutzungsdauer_ im Formular ist nur eine Information für die Admins.
+
+* *30 Tage vor Ablauf:* Label `läuft ab`, ihr und eure Lehrkraft bekommt eine Erinnerung.
+* *Länger nötig?* Bittet eure betreuende Lehrkraft, im Issue `/verlaengern` zu kommentieren
+  (12 Monate) oder z.B. `/verlaengern 6` (6 Monate, höchstens 12 auf einmal).
+* *Am Ablauftag:* Label `abgelaufen`. Die Admins löschen die VM und schließen das Issue.
+
 == Wenn ihr die VM nicht mehr braucht
 
 Schreibt einen Kommentar in euer Issue. Die VM wird dann gelöscht und das Issue geschlossen.
-Spätestens nach der angegebenen _Nutzungsdauer_ wird die VM ohnehin entfernt.
+Spätestens nach Ablauf der Nutzungsdauer (<<nutzungsdauer>>) wird die VM ohnehin entfernt.
 
 [IMPORTANT]
 ====

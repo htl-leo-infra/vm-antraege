@@ -24,13 +24,17 @@ Team `vm-admins` (Rolle Triage): alle obigen. Schüler*innen bearbeiten nur eige
 ## Ablauf
 
 1. Issue über Formular `.github/ISSUE_TEMPLATE/vm-antrag.yaml` → Label `vm-antrag`
-2. Workflow prüft Projektname (`^[a-z][a-z0-9-]{2,29}$`) → `status: neu` + @bauepete, sonst `ungültig`
-3. Peter setzt `status: freigegeben` → Workflow erwähnt Himmelbauer
-4. Himmelbauer kommentiert `/ip <intern>[/prefix] [public <öffentlich>[/prefix]]` → `status: ip-vergeben` + @MWagnerOE5AOO @Master-Andi
-5. VM angelegt → Label `status: erstellt` → Workflow informiert Antragsteller*in
-6. Jederzeit vor „erstellt“: `/ablehnen <Begründung>` (oder nur Label `abgelehnt` als Rückfall) → Status-Labels weg, `abgelehnt`, Kommentar, Issue geschlossen
+2. Workflow prüft Formular (Projektname `^[a-z][a-z0-9-]{2,29}$`, Lehrkraft = existierender GitHub-User ≠ Antragsteller*in, …) → `status: neu` + @Lehrkraft, sonst `ungültig`
+3. Lehrkraft kommentiert `/freigeben` → `status: betreuer-freigegeben` + @bauepete
+4. Peter setzt `status: av-freigegeben` (normal nach Lehrkraft, darf auch direkt) → Workflow erwähnt Himmelbauer
+5. Himmelbauer kommentiert `/ip <intern>[/prefix] [public <öffentlich>[/prefix]]` → `status: ip-vergeben` + @MWagnerOE5AOO @Master-Andi
+6. VM angelegt → Label `status: erstellt` → Security-Checkliste an Issue-Body, Ablaufdatum +12 Monate (Marker `<!-- ablauf: … -->` im Bot-Kommentar), Antragsteller*in informiert
+7. Täglich: 30 Tage vor Ablauf `läuft ab`, am Ablauftag `abgelaufen` (keine Auto-Löschung); Lehrkraft verlängert mit `/verlaengern [Monate]` (1–12)
+8. Jederzeit vor „erstellt“: `/ablehnen <Begründung>` (oder nur Label `abgelehnt` als Rückfall) → Status-Labels weg, `abgelehnt`, Kommentar, Issue geschlossen
 
-Workflows: `antrag-pruefen.yaml` (opened/edited), `status.yaml` (labeled), `kommandos.yaml` (`/ip`, `/ablehnen`).
+Kommandos `/freigeben`, `/ablehnen`, `/verlaengern`: eingetragene Lehrkraft oder Triage; `/ip`: nur Triage. Lehrkräfte brauchen keine Repo-Rechte.
+
+Workflows: `antrag-pruefen.yaml` (opened/edited), `status.yaml` (labeled), `kommandos.yaml` (`/freigeben`, `/ip`, `/ablehnen`, `/verlaengern`), `ablauf.yaml` (täglich).
 
 Benachrichtigung ausschließlich per @-Mention (GitHub-Mail), einzelne Personen, kein Team-Mention. SMTP/Graph-API evtl. später.
 

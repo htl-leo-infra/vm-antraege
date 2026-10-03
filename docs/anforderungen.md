@@ -76,13 +76,13 @@ Nach der Vorstellung am 02.10.2026. Originaltext:
 > - Nachdem die VM angelegt ist soll dann noch eine Checkliste für die Security gemacht werden. Lynis/Fail2Ban/ClamAV/WAF/SSH Härtung
 > - Vorgaben bei der Zeit automatisch 1 Jahr. Betreuenden Lehrkraft kann die Zeit verlängern.
 
-Umsetzung (noch offen):
+Umsetzung (03.10.2026):
 
 - [x] **DNS-Name:** keine Einschränkung auf `htl-leonding.ac.at` – bereits erfüllt, keine Änderung nötig. Der Workflow prüft nur auf gültigen Hostnamen und Eindeutigkeit; `htl-leonding.ac.at` steht nur als Beispiel im Platzhalter und in den Leitfäden.
-- [ ] **Betreuende Lehrkraft:** Feld wird GitHub-Username (eventuell mit Prüfung, ob der Account existiert). Die Lehrkraft wird per @-Mention benachrichtigt und gibt als Erste frei.
-- [ ] **Zweistufige Freigabe:** Label `status: freigegeben` wird ersetzt durch `status: betreuer-freigegeben` (zuerst, Lehrkraft per `/freigeben`) und danach `status: av-freigegeben` (Peter Bauer). Erst nach beiden geht es zur IP-Vergabe.
-- [ ] **Security-Checkliste nach Erstellung:** Bei `status: erstellt` bekommt das Issue eine Checkliste (Lynis, Fail2Ban, ClamAV, WAF, SSH-Härtung) zum Abhaken durch die Schüler*innen.
-- [ ] **Nutzungsdauer:** Standard automatisch 1 Jahr. Die betreuende Lehrkraft kann verlängern.
+- [x] **Betreuende Lehrkraft:** Feld wird GitHub-Username (eventuell mit Prüfung, ob der Account existiert). Die Lehrkraft wird per @-Mention benachrichtigt und gibt als Erste frei.
+- [x] **Zweistufige Freigabe:** Label `status: freigegeben` wird ersetzt durch `status: betreuer-freigegeben` (zuerst, Lehrkraft per `/freigeben`) und danach `status: av-freigegeben` (Peter Bauer). Danach geht es zur IP-Vergabe. Peter darf auch ohne Lehrkraft-Freigabe direkt freigeben (Entscheidung 03.10.2026).
+- [x] **Security-Checkliste nach Erstellung:** Bei `status: erstellt` hängt der Bot eine Checkliste (Lynis, Fail2Ban, ClamAV, WAF, SSH-Härtung) an den Issue-Body; die Schüler*innen haken als Autor*innen selbst ab.
+- [x] **Nutzungsdauer:** Standard automatisch 1 Jahr. Die betreuende Lehrkraft kann verlängern.
 
 Entscheidungen (03.10.2026, Thomas Stütz):
 
@@ -104,5 +104,5 @@ Entscheidungen (03.10.2026, Thomas Stütz):
 ## Offene Punkte
 
 - [x] GitHub-Username von Thomas Himmelbauer: `ghbugfinder` (30.09.2026, ins Team eingeladen)
-- [ ] Stufen für CPU/RAM/Disk mit Michael abstimmen (derzeit 1/2/4 Kerne, 1/2/4/8 GB RAM, 10/20/50 GB Disk)
+- [x] Stufen für CPU/RAM/Disk: 1/2/4 Kerne, 1/2/4/8 GB RAM, 10/20/50 GB Disk – von Michael akzeptiert (03.10.2026)
 - [ ] Echter Mailverteiler später? (Office365 via Graph API mit Funktionspostfach, Schul-IT)

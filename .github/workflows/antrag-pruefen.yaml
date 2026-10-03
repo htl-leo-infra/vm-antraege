@@ -65,7 +65,13 @@ jobs:
               .filter((o) => o.number !== nr && !o.pull_request && !a.labelNames(o).includes(a.LABEL.abgelehnt))
               .map((o) => a.parseBody(o.body));
 
-            const { errors, warnings } = a.validate(f, others, en);
+            const { errors, warnings } = a.validate(f, others, en, issue.user.login);
+            const teacher = a.teacherLogin(f);
+            if (teacher && teacher.toLowerCase() !== issue.user.login.toLowerCase() && !(await a.userExists(github, teacher))) {
+              errors.push(t(
+                `Betreuende Lehrkraft: GitHub-Benutzer \`${teacher}\` existiert nicht.`,
+                `Supervising teacher: GitHub user \`${teacher}\` does not exist.`));
+            }
             const warnText = warnings.length ? `\n\n${warnings.map((w) => `> ⚠️ ${w}`).join('\n>\n')}` : '';
 
             if (errors.length) {
@@ -85,13 +91,19 @@ jobs:
             await a.upsertComment(github, context, nr, 'vm-antrag:pruefung',
               t('✅ Der Antrag ist gültig.', '✅ The request is valid.') + warnText, true);
 
-            // Erstmals gültig → zur Freigabe
+            // Erstmals gültig → zur Freigabe durch die betreuende Lehrkraft
+            const askTeacher = (intro) =>
+              `${intro} – betreuende Lehrkraft: @${teacher}. Bitte prüfen und mit einem Kommentar \`/freigeben\` zustimmen ` +
+              '(oder `/ablehnen <Begründung>`). Danach gibt die AV frei.';
             if (!labels.some((l) => a.STATUS_LABELS.includes(l))) {
               await a.addLabels(github, context, nr, [a.LABEL.neu]);
               await a.comment(github, context, nr,
-                `${a.mention(process.env.FREIGABE)} Neuer VM-Antrag \`${f.projektname}\` – bitte prüfen und mit Label ` +
-                `\`${a.LABEL.freigegeben}\` freigeben (oder \`${a.LABEL.abgelehnt}\`).\n\n` +
-                t('Danke, euer Antrag ist eingegangen und wartet auf Freigabe.',
-                  'Thank you, your request has been received and is waiting for approval.') +
+                askTeacher(`Neuer VM-Antrag \`${f.projektname}\``) + '\n\n' +
+                t('Danke, euer Antrag ist eingegangen und wartet auf die Freigabe durch eure betreuende Lehrkraft.',
+                  'Thank you, your request has been received and is waiting for approval by your supervising teacher.') +
                 warnText);
+            } else if (labels.includes(a.LABEL.neu) && oldBody !== undefined &&
+                       a.teacherLogin(a.parseBody(oldBody)).toLowerCase() !== teacher.toLowerCase()) {
+              // Lehrkraft vor der Freigabe geändert → neue Lehrkraft benachrichtigen
+              await a.comment(github, context, nr, askTeacher(`Lehrkraft im VM-Antrag \`${f.projektname}\` geändert`));
             }

@@ -82,6 +82,18 @@ within the school network (start, stop, console).
 IMPORTANT: If you change the team members after approval, the admins are notified
 automatically and review the change.
 
+[[teacher]]
+== Supervising teacher: GitHub username
+
+In the field _Supervising teacher's GitHub username_, enter the *GitHub username* of your
+supervising teacher, not their real name. Ask them for it beforehand.
+
+* Your teacher is mentioned in the issue and gets an email from GitHub.
+* They approve your request *first*, with the comment `/freigeben`. Only then does the
+  department review it.
+* You cannot enter yourself. If the username does not exist on GitHub, the request is
+  marked `ungültig` (invalid).
+
 == Resources
 
 Choose as little as possible — all projects of the school share the resources.
@@ -213,6 +225,12 @@ Disable weak SSH cipher suites and outdated algorithms so that only modern proce
 
 For details on the underlying concepts (attack surfaces, hardening, defense in depth) see the PowerPoint slides from the network technology lessons.
 
+=== Security checklist in the issue
+
+As soon as your VM has been created, the bot appends a *security checklist* to your request:
+Lynis, Fail2Ban, ClamAV, WAF and SSH hardening. Tick off each item as soon as it is done
+(click the box). This way the admins can also see your progress.
+
 NOTE: These measures do not replace regular maintenance, but they increase protection
 considerably.
 
@@ -234,20 +252,34 @@ link:https://github.com/htl-leonding-college/keycloak-antraege[keycloak-antraege
 
 The status labels are in German. This is what they mean:
 
-. You submit the request — label `status: neu` (new).
-. The request is reviewed and approved — label `status: freigegeben` (approved).
+. You submit the request — label `status: neu` (new). Your supervising teacher is notified.
+. Your teacher approves (`/freigeben`) — label `status: betreuer-freigegeben` (approved by teacher).
+. The department approves — label `status: av-freigegeben` (approved by department).
 . The VM gets an IP address, it is posted as a comment in the issue — label `status: ip-vergeben` (IP assigned).
-. The VM is created — label `status: erstellt` (created), you get a message in the issue. The access credentials come through a separate channel.
+. The VM is created — label `status: erstellt` (created), you get a message in the issue with
+  the expiry date. The security checklist then appears at the end of your request. The access
+  credentials come through a separate channel.
 
 If your request is rejected, you get the reason as a comment and the issue is closed
 (label `abgelehnt` = rejected). You can then submit a new, corrected request.
 
 Ask questions as a comment directly in your issue — English is fine.
 
+[[usage-period]]
+== Usage period and extension
+
+Your VM expires *1 year after it was created*. The expiry date is posted in the issue. The
+_Usage period_ field in the form is only information for the admins.
+
+* *30 days before expiry:* label `läuft ab` (expiring), you and your teacher get a reminder.
+* *Need it longer?* Ask your supervising teacher to comment `/verlaengern` in the issue
+  (12 months) or e.g. `/verlaengern 6` (6 months, at most 12 at a time).
+* *On the expiry date:* label `abgelaufen` (expired). The admins delete the VM and close the issue.
+
 == When you no longer need the VM
 
 Write a comment in your issue. The VM will then be deleted and the issue closed.
-At the latest after the specified _Usage period_ the VM will be removed anyway.
+At the latest when the usage period ends (<<usage-period>>) the VM will be removed anyway.
 
 [IMPORTANT]
 ====

@@ -18,7 +18,7 @@ jobs:
   status:
     if: >-
       contains(github.event.issue.labels.*.name, 'vm-antrag') &&
-      contains(fromJSON('["status: freigegeben", "status: erstellt", "abgelehnt"]'), github.event.label.name)
+      contains(fromJSON('["status: av-freigegeben", "status: erstellt", "abgelehnt"]'), github.event.label.name)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -35,28 +35,45 @@ jobs:
             const nr = issue.number;
             const en = a.isEnglish(issue);
             const f = a.parseBody(issue.body);
+            const labels = a.labelNames(issue);
 
             switch (context.payload.label.name) {
-              case a.LABEL.freigegeben:
+              case a.LABEL.avFreigegeben:
+                // Normalerweise nach der Lehrkraft (/freigeben); die AV darf aber auch direkt freigeben
+                const skipped = !labels.includes(a.LABEL.betreuerFreigegeben);
                 await a.removeLabel(github, context, nr, a.LABEL.neu);
+                await a.removeLabel(github, context, nr, a.LABEL.betreuerFreigegeben);
                 await a.comment(github, context, nr,
-                  `${a.mention(process.env.IP_VERGABE)} Antrag \`${f.projektname}\` wurde von @${context.actor} freigegeben. ` +
+                  `${a.mention(process.env.IP_VERGABE)} Antrag \`${f.projektname}\` wurde von @${context.actor} freigegeben${skipped ? ' (ohne Freigabe der Lehrkraft)' : ''}. ` +
                   'Bitte IP-Adresse eintragen mit einem Kommentar (Präfix und öffentliche IP optional):\n\n```\n/ip 10.x.x.x/24 public x.x.x.x/24\n```\n\n' +
                   (en ? 'Your request has been approved. Next, your VM will get an IP address.'
                       : 'Euer Antrag wurde freigegeben. Als Nächstes bekommt eure VM eine IP-Adresse.'));
                 break;
 
-              case a.LABEL.erstellt:
+              case a.LABEL.erstellt: {
                 // alle vorherigen Status-Labels entfernen, auch wenn Schritte übersprungen wurden
-                for (const l of [a.LABEL.neu, a.LABEL.freigegeben, a.LABEL.ipVergeben]) {
+                for (const l of a.OPEN_STATUS_LABELS) {
                   await a.removeLabel(github, context, nr, l);
                 }
+                // Security-Checkliste an den Issue-Body hängen (Antragsteller*in kann abhaken)
+                if (!(issue.body || '').includes(a.SECURITY_MARKER)) {
+                  await github.rest.issues.update({ ...context.repo, issue_number: nr, body: `${issue.body || ''}\n\n${a.securityChecklist(en)}` });
+                }
+                // Ablaufdatum nur beim ersten Mal setzen (Label kann erneut gesetzt werden)
+                const expiry = (await a.findExpiry(github, context, nr)) || a.addMonths(a.today(), a.EXPIRY_MONTHS);
+                const date = a.formatDate(expiry, en);
                 await a.comment(github, context, nr, `@${issue.user.login} ` + (en
                   ? `🎉 Your VM \`${f.projektname}\` is ready. You will receive the access credentials through a separate channel – never post them here.\n\n` +
+                    '🔒 Please work through the **security checklist** at the end of the request and tick off each item.\n\n' +
+                    `⏳ The VM expires on **${date}**. You will get a reminder ${a.EXPIRY_WARN_DAYS} days before; your supervising teacher can extend it with \`/verlaengern\`.\n\n` +
                     'When you no longer need the VM, just write a comment here.'
                   : `🎉 Eure VM \`${f.projektname}\` ist bereit. Die Zugangsdaten bekommt ihr auf einem anderen Weg – bitte niemals hier posten.\n\n` +
-                    'Wenn ihr die VM nicht mehr braucht, schreibt einfach einen Kommentar hier.'));
+                    '🔒 Bitte arbeitet die **Security-Checkliste** am Ende des Antrags durch und hakt jeden Punkt ab.\n\n' +
+                    `⏳ Die VM läuft am **${date}** ab. ${a.EXPIRY_WARN_DAYS} Tage vorher bekommt ihr eine Erinnerung; eure betreuende Lehrkraft kann mit \`/verlaengern\` verlängern.\n\n` +
+                    'Wenn ihr die VM nicht mehr braucht, schreibt einfach einen Kommentar hier.') +
+                  `\n${a.expiryMarker(expiry)}`);
                 break;
+              }
 
               case a.LABEL.abgelehnt:
                 // Rückfall: nur Label gesetzt, Begründung steht (hoffentlich) in einem Kommentar

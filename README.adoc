@@ -27,9 +27,10 @@ link:https://github.com/htl-leo-infra/vm-antraege/issues/new/choose[„Request a
 . link:https://github.com/htl-leo-infra/vm-antraege/issues/new/choose[*Antrag stellen*]
   — ein GitHub-Issue mit dem Formular „VM oder LXC für ein Projekt beantragen".
   Ihr braucht dafür nur ein GitHub-Konto.
-. *Freigabe* — euer Antrag wird geprüft und freigegeben.
+. *Freigabe* — zuerst gibt eure betreuende Lehrkraft frei, danach die Abteilung.
 . *IP-Adresse* — eure VM bekommt eine IP-Adresse, sie steht danach im Issue.
 . *Erstellung* — die VM wird angelegt. Ihr bekommt eine Nachricht im Issue, sobald sie bereit ist.
+. *Nutzungsdauer* — die VM läuft nach 1 Jahr ab, eure Lehrkraft kann verlängern.
 
 Den aktuellen Stand seht ihr jederzeit am Label eures Issues:
 
@@ -37,10 +38,13 @@ Den aktuellen Stand seht ihr jederzeit am Label eures Issues:
 |===
 |Label |Bedeutung
 
-|`status: neu` |Antrag eingegangen, wartet auf Freigabe
-|`status: freigegeben` |Freigegeben, wartet auf IP-Adresse
+|`status: neu` |Antrag eingegangen, wartet auf Freigabe durch die betreuende Lehrkraft
+|`status: betreuer-freigegeben` |Von der Lehrkraft freigegeben, wartet auf Freigabe durch die Abteilung
+|`status: av-freigegeben` |Freigegeben, wartet auf IP-Adresse
 |`status: ip-vergeben` |IP-Adresse vergeben, VM wird angelegt
 |`status: erstellt` |VM ist bereit
+|`läuft ab` |VM läuft in höchstens 30 Tagen ab — Lehrkraft kann verlängern
+|`abgelaufen` |Nutzungsdauer vorbei, VM wird gelöscht
 |`ungültig` |Formular fehlerhaft — bitte den Hinweis im Issue lesen und den Antrag korrigieren
 |`abgelehnt` |Antrag nicht genehmigt
 |===
@@ -53,5 +57,5 @@ Keine Passwörter, keine Schlüssel, keine privaten Daten.
 
 == Für Admins
 
-Wie die Workflows auf Labels und Kommentare reagieren (Freigabe, `/ip`, VM erstellt):
+Wie die Workflows auf Labels und Kommentare reagieren (Freigabe, `/ip`, VM erstellt, Ablauf):
 link:docs/ablauf.adoc[Ablauf: Was bei Aktionen im Issue passiert].

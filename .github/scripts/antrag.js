@@ -6,7 +6,8 @@
 const FIELD_LABELS = {
   'Projektname': 'projektname', 'Project name': 'projektname',
   'Projektbeschreibung': 'projektbeschreibung', 'Project description': 'projektbeschreibung',
-  'Betreuende Lehrkraft': 'lehrkraft', 'Supervising teacher': 'lehrkraft',
+  'GitHub-Name der betreuenden Lehrkraft': 'lehrkraft', "Supervising teacher's GitHub username": 'lehrkraft',
+  'Betreuende Lehrkraft': 'lehrkraft', 'Supervising teacher': 'lehrkraft', // alte Formulare (bis 10/2026)
   'Teammitglieder': 'team', 'Team members': 'team',
   'Nutzungsdauer': 'nutzungsdauer', 'Usage period': 'nutzungsdauer',
   'Typ': 'typ', 'Type': 'typ',
@@ -24,19 +25,28 @@ const LABEL = {
   antrag: 'vm-antrag',
   english: 'english',
   neu: 'status: neu',
-  freigegeben: 'status: freigegeben',
+  betreuerFreigegeben: 'status: betreuer-freigegeben',
+  avFreigegeben: 'status: av-freigegeben',
   ipVergeben: 'status: ip-vergeben',
   erstellt: 'status: erstellt',
   abgelehnt: 'abgelehnt',
   ungueltig: 'ungültig',
+  laeuftAb: 'läuft ab',
+  abgelaufen: 'abgelaufen',
 };
-const STATUS_LABELS = [LABEL.neu, LABEL.freigegeben, LABEL.ipVergeben, LABEL.erstellt, LABEL.abgelehnt];
+// Status-Labels vor „erstellt“ (werden bei erstellt/abgelehnt entfernt).
+const OPEN_STATUS_LABELS = [LABEL.neu, LABEL.betreuerFreigegeben, LABEL.avFreigegeben, LABEL.ipVergeben];
+const STATUS_LABELS = [...OPEN_STATUS_LABELS, LABEL.erstellt, LABEL.abgelehnt];
 // Ab diesem Status ist der Antrag freigegeben – Änderungen müssen die Admins sehen.
-const APPROVED_LABELS = [LABEL.freigegeben, LABEL.ipVergeben, LABEL.erstellt];
+const APPROVED_LABELS = [LABEL.betreuerFreigegeben, LABEL.avFreigegeben, LABEL.ipVergeben, LABEL.erstellt];
+// Nutzungsdauer: Standard ab Erstellung, Verlängerung pro Kommando, Vorwarnung vor Ablauf.
+const EXPIRY_MONTHS = 12;
+const EXTEND_MAX_MONTHS = 12;
+const EXPIRY_WARN_DAYS = 30;
 
 // Deutsche Feldnamen für Admin-Kommentare.
 const FIELD_NAMES = {
-  projektname: 'Projektname', projektbeschreibung: 'Projektbeschreibung', lehrkraft: 'Betreuende Lehrkraft',
+  projektname: 'Projektname', projektbeschreibung: 'Projektbeschreibung', lehrkraft: 'Betreuende Lehrkraft (GitHub)',
   team: 'Teammitglieder', nutzungsdauer: 'Nutzungsdauer', typ: 'Typ', cpu: 'CPU-Kerne', ram: 'RAM (GB)',
   disk: 'Disk (GB)', internet: 'Internet', ports: 'Public Ports', dns: 'DNS Name', spezielles: 'Spezielle Anforderungen',
 };
@@ -47,6 +57,9 @@ const IPV4_RE = /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\
 const RISKY_PORTS = [22, 3306, 5432, 6379, 27017];
 // Schul-Benutzernamen: ad=Abendschule, kd=Kolleg, if=Informatik, it=Medientechnik, el=Elektronik, bg=Biomedizin
 const USERNAME_RE = /^(ad|kd|if|it|el|bg)\d{6}$/;
+const GITHUB_USER_RE = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
+const EXPIRY_RE = /<!-- ablauf: (\d{4}-\d{2}-\d{2}) -->/;
+const SECURITY_MARKER = '<!-- vm-antrag:security -->';
 
 // Issue-Form-Body ("### Label\n\nWert") → { feldId: wert }
 function parseBody(body) {
@@ -72,6 +85,66 @@ const mention = (users) => (users || '').split(/[\s,]+/).filter(Boolean).map((u)
 const isIPv4 = (s) => IPV4_RE.test(s);
 const splitUsers = (s) => (s || '').split(/[\s,;]+/).filter(Boolean);
 
+// GitHub-Name der Lehrkraft aus dem Formular (ohne @), oder '' wenn kein gültiger Username.
+function teacherLogin(f) {
+  const login = (f.lehrkraft || '').trim().replace(/^@/, '');
+  return GITHUB_USER_RE.test(login) ? login : '';
+}
+// Eingetragene Lehrkraft (nie die Antragsteller*in selbst).
+const isTeacher = (issue, login) => {
+  const teacher = teacherLogin(parseBody(issue.body)).toLowerCase();
+  return !!teacher && teacher === login.toLowerCase() && login.toLowerCase() !== issue.user.login.toLowerCase();
+};
+
+async function userExists(github, login) {
+  try {
+    const { data } = await github.rest.users.getByUsername({ username: login });
+    return data.type === 'User';
+  } catch (e) {
+    if (e.status === 404) return false;
+    throw e;
+  }
+}
+
+// Datum als ISO-String (JJJJ-MM-TT, UTC).
+const today = () => new Date().toISOString().slice(0, 10);
+function addMonths(iso, n) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const last = new Date(Date.UTC(y, m - 1 + n + 1, 0)).getUTCDate(); // letzter Tag des Zielmonats
+  return new Date(Date.UTC(y, m - 1 + n, Math.min(d, last))).toISOString().slice(0, 10);
+}
+const daysUntil = (iso) => Math.round((Date.parse(iso) - Date.parse(today())) / 86400000);
+const formatDate = (iso, en) => {
+  const [y, m, d] = iso.split('-').map(Number);
+  return en ? iso : `${d}.${m}.${y}`;
+};
+const expiryMarker = (iso) => `<!-- ablauf: ${iso} -->`;
+
+// Aktuelles Ablaufdatum = Marker im letzten Bot-Kommentar, oder null.
+async function findExpiry(github, context, number) {
+  const comments = await github.paginate(github.rest.issues.listComments, { ...context.repo, issue_number: number, per_page: 100 });
+  const found = comments.filter((c) => c.user.type === 'Bot').map((c) => c.body.match(EXPIRY_RE)?.[1]).filter(Boolean);
+  return found.length ? found[found.length - 1] : null;
+}
+
+// Security-Checkliste, wird bei „erstellt“ an den Issue-Body angehängt (Antragsteller*in kann abhaken).
+function securityChecklist(en) {
+  const link = `https://github.com/htl-leo-infra/vm-antraege/blob/main/${en ? 'schueler-guide' : 'schueler-leitfaden'}.adoc#security`;
+  return `${SECURITY_MARKER}\n` + (en
+    ? `### Security checklist\n\nTick off what is done (click the box or edit the issue). Details: [guide, section Security](${link}).\n\n` +
+      '- [ ] Lynis audit run, recommendations worked through\n' +
+      '- [ ] Fail2Ban active (`fail2ban-client status`)\n' +
+      '- [ ] ClamAV signatures up to date, regular scan scheduled\n' +
+      '- [ ] WAF (ModSecurity + OWASP CRS) set up – web server reachable from the internet only\n' +
+      '- [ ] SSH hardened (weak ciphers and outdated algorithms disabled)'
+    : `### Security-Checkliste\n\nHakt ab, was erledigt ist (Kästchen anklicken oder Issue bearbeiten). Details: [Leitfaden, Abschnitt Security](${link}).\n\n` +
+      '- [ ] Lynis-Audit ausgeführt, Empfehlungen abgearbeitet\n' +
+      '- [ ] Fail2Ban aktiv (`fail2ban-client status`)\n' +
+      '- [ ] ClamAV-Signaturen aktuell, regelmäßiger Scan eingeplant\n' +
+      '- [ ] WAF (ModSecurity + OWASP CRS) eingerichtet – nur bei Webserver mit Internet „Yes“\n' +
+      '- [ ] SSH gehärtet (schwache Cipher-Suiten und veraltete Algorithmen deaktiviert)');
+}
+
 // IPv4 mit optionalem Präfix, z.B. 10.9.32.1 oder 10.9.32.1/24
 function isIPv4Cidr(s) {
   const [ip, prefix, ...rest] = (s || '').split('/');
@@ -94,7 +167,8 @@ function diffFields(oldF, newF) {
 }
 
 // Prüft die Formularwerte. others: Felder (parseBody) anderer offener Anträge.
-function validate(f, others, en) {
+// author: GitHub-Login der Antragsteller*in (darf nicht selbst Lehrkraft sein).
+function validate(f, others, en, author) {
   const t = (de, e) => (en ? e : de);
   const errors = [];
   const warnings = [];
@@ -108,6 +182,17 @@ function validate(f, others, en) {
     errors.push(t(
       `Projektname \`${name}\` ist bereits von einem anderen offenen Antrag belegt. Bitte einen anderen Namen wählen.`,
       `Project name \`${name}\` is already used by another open request. Please choose a different name.`));
+  }
+
+  const teacher = teacherLogin(f);
+  if (!teacher) {
+    errors.push(t(
+      `Betreuende Lehrkraft: \`${f.lehrkraft || ''}\` ist kein GitHub-Benutzername. Bitte den GitHub-Namen eintragen, nicht den echten Namen.`,
+      `Supervising teacher: \`${f.lehrkraft || ''}\` is not a GitHub username. Please enter the GitHub username, not the real name.`));
+  } else if (author && teacher.toLowerCase() === author.toLowerCase()) {
+    errors.push(t(
+      'Betreuende Lehrkraft: ihr könnt euch nicht selbst eintragen.',
+      'Supervising teacher: you cannot enter yourself.'));
   }
 
   const users = splitUsers(f.team);
@@ -167,7 +252,7 @@ function summary(f, ip, publicIp) {
     ['Internet', f.internet],
     ['Public Ports', f.ports],
     ['DNS Name', f.dns],
-    ['Betreuende Lehrkraft', f.lehrkraft],
+    ['Betreuende Lehrkraft', teacherLogin(f) || f.lehrkraft],
     ['Nutzungsdauer', f.nutzungsdauer],
   ].filter(([, v]) => v);
   const esc = (v) => String(v).replace(/\|/g, '\\|').replace(/\n+/g, '<br>');
@@ -238,7 +323,7 @@ async function reject(github, context, issue, actor, reason, ipVergabe) {
   }
 
   const hadIp = labels.includes(LABEL.ipVergeben);
-  for (const l of [LABEL.neu, LABEL.freigegeben, LABEL.ipVergeben]) {
+  for (const l of OPEN_STATUS_LABELS) {
     if (labels.includes(l)) await removeLabel(github, context, nr, l);
   }
   if (!labels.includes(LABEL.abgelehnt)) await addLabels(github, context, nr, [LABEL.abgelehnt]);
@@ -257,6 +342,8 @@ async function reject(github, context, issue, actor, reason, ipVergabe) {
 }
 
 module.exports = {
-  LABEL, STATUS_LABELS, APPROVED_LABELS, parseBody, labelNames, isEnglish, wantsInternet, mention, isIPv4,
-  isIPv4Cidr, parseIpCommand, diffFields, validate, summary, removeLabel, addLabels, comment, upsertComment, hasTriage, reject,
+  LABEL, OPEN_STATUS_LABELS, STATUS_LABELS, APPROVED_LABELS, EXPIRY_MONTHS, EXTEND_MAX_MONTHS, EXPIRY_WARN_DAYS, SECURITY_MARKER,
+  parseBody, labelNames, isEnglish, wantsInternet, mention, isIPv4, isIPv4Cidr, parseIpCommand, diffFields, validate, summary,
+  teacherLogin, isTeacher, userExists, today, addMonths, daysUntil, formatDate, expiryMarker, findExpiry, securityChecklist,
+  removeLabel, addLabels, comment, upsertComment, hasTriage, reject,
 };

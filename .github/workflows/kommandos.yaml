@@ -1,8 +1,11 @@
 name: Kommandos
 
-# Kommentar-Kommandos für Admins (Rolle Triage oder höher):
-#   /ip <adresse>           IP eintragen (nur bei status: freigegeben)
+# Kommentar-Kommandos:
+#   /freigeben              Freigabe durch die betreuende Lehrkraft (nur bei status: neu)
+#   /ip <adresse>           IP eintragen (nur bei status: av-freigegeben, nur Admins)
 #   /ablehnen <begründung>  Antrag ablehnen und schließen
+#   /verlaengern [monate]   Nutzungsdauer verlängern (nur bei status: erstellt)
+# Erlaubt: Rolle Triage oder höher; /freigeben, /ablehnen, /verlaengern auch die eingetragene Lehrkraft.
 
 on:
   issue_comment:
@@ -20,7 +23,8 @@ jobs:
     if: >-
       !github.event.issue.pull_request &&
       contains(github.event.issue.labels.*.name, 'vm-antrag') &&
-      (startsWith(github.event.comment.body, '/ip') || startsWith(github.event.comment.body, '/ablehnen'))
+      (startsWith(github.event.comment.body, '/ip') || startsWith(github.event.comment.body, '/ablehnen') ||
+       startsWith(github.event.comment.body, '/freigeben') || startsWith(github.event.comment.body, '/verlaengern'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -29,6 +33,7 @@ jobs:
 
       - uses: actions/github-script@v9
         env:
+          FREIGABE: ${{ vars.FREIGABE || 'bauepete' }}
           IP_VERGABE: ${{ vars.IP_VERGABE || 'ghbugfinder' }}
           VM_ERSTELLUNG: ${{ vars.VM_ERSTELLUNG || 'MWagnerOE5AOO Master-Andi' }}
         with:
@@ -37,22 +42,44 @@ jobs:
             const issue = context.payload.issue;
             const c = context.payload.comment;
             const nr = issue.number;
+            const en = a.isEnglish(issue);
             const labels = a.labelNames(issue);
             const react = (content) => github.rest.reactions.createForIssueComment({ ...context.repo, comment_id: c.id, content });
             const reply = async (msg) => { await react('confused'); await a.comment(github, context, nr, `@${c.user.login} ${msg}`); };
 
             const text = c.body.trim();
-            const cmd = text.match(/^\/(ip|ablehnen)(?=\s|$)/)?.[1];
+            const cmd = text.match(/^\/(ip|ablehnen|freigeben|verlaengern)(?=\s|$)/)?.[1];
             if (!cmd) return;
 
-            if (!(await a.hasTriage(github, context, c.user.login))) {
-              core.info(`${c.user.login} darf keine Kommandos ausführen – ignoriert.`);
+            const triage = await a.hasTriage(github, context, c.user.login);
+            const teacher = a.isTeacher(issue, c.user.login);
+            if (!(triage || (teacher && cmd !== 'ip'))) {
+              core.info(`${c.user.login} darf /${cmd} nicht ausführen – ignoriert.`);
               return;
             }
 
+            if (cmd === 'freigeben') {
+              if (!labels.includes(a.LABEL.neu)) {
+                return reply(`\`/freigeben\` geht nur bei Label \`${a.LABEL.neu}\`.`);
+              }
+              if (labels.includes(a.LABEL.ungueltig)) {
+                return reply(`Der Antrag ist ungültig (Label \`${a.LABEL.ungueltig}\`) und muss zuerst korrigiert werden.`);
+              }
+              const f = a.parseBody(issue.body);
+              await a.removeLabel(github, context, nr, a.LABEL.neu);
+              await a.addLabels(github, context, nr, [a.LABEL.betreuerFreigegeben]);
+              await react('+1');
+              await a.comment(github, context, nr,
+                `${a.mention(process.env.FREIGABE)} Antrag \`${f.projektname}\` wurde von @${c.user.login} ` +
+                `${teacher ? '(betreuende Lehrkraft)' : '(stellvertretend für die Lehrkraft)'} freigegeben. ` +
+                `Bitte prüfen und mit Label \`${a.LABEL.avFreigegeben}\` freigeben (oder \`/ablehnen <Begründung>\`).\n\n` +
+                (en ? 'Your supervising teacher has approved your request. Next, the request is reviewed by the head of department.'
+                    : 'Eure betreuende Lehrkraft hat den Antrag freigegeben. Als Nächstes prüft die Abteilung den Antrag.'));
+            }
+
             if (cmd === 'ip') {
-              if (!labels.includes(a.LABEL.freigegeben)) {
-                return reply(`\`/ip\` geht nur bei Label \`${a.LABEL.freigegeben}\`.`);
+              if (!labels.includes(a.LABEL.avFreigegeben)) {
+                return reply(`\`/ip\` geht nur bei Label \`${a.LABEL.avFreigegeben}\`.`);
               }
               const ip = a.parseIpCommand(text.split('\n')[0]);
               if (!ip) {
@@ -62,14 +89,14 @@ jobs:
               const f = a.parseBody(issue.body);
               const shown = ip.public ? `${ip.intern}\` / \`${ip.public}` : ip.intern;
 
-              await a.removeLabel(github, context, nr, a.LABEL.freigegeben);
+              await a.removeLabel(github, context, nr, a.LABEL.avFreigegeben);
               await a.addLabels(github, context, nr, [a.LABEL.ipVergeben]);
               await react('+1');
               await a.comment(github, context, nr,
                 `${a.mention(process.env.VM_ERSTELLUNG)} Bitte VM anlegen und danach Label \`${a.LABEL.erstellt}\` setzen.\n\n` +
                 a.summary(f, ip.intern, ip.public) + '\n\n---\n\n' +
-                (a.isEnglish(issue) ? `IP address of your VM: \`${shown}\`. The VM will be created next.`
-                                    : `IP-Adresse eurer VM: \`${shown}\`. Als Nächstes wird die VM angelegt.`));
+                (en ? `IP address of your VM: \`${shown}\`. The VM will be created next.`
+                    : `IP-Adresse eurer VM: \`${shown}\`. Als Nächstes wird die VM angelegt.`));
             }
 
             if (cmd === 'ablehnen') {
@@ -82,4 +109,27 @@ jobs:
               }
               await react('+1');
               await a.reject(github, context, issue, c.user.login, reason, process.env.IP_VERGABE);
+            }
+
+            if (cmd === 'verlaengern') {
+              if (!labels.includes(a.LABEL.erstellt) || issue.state !== 'open') {
+                return reply(`\`/verlaengern\` geht nur bei offenem Issue mit Label \`${a.LABEL.erstellt}\`.`);
+              }
+              const m = text.split('\n')[0].match(/^\/verlaengern(?:\s+(\d+))?\s*$/);
+              const months = m ? Number(m[1] || a.EXTEND_MAX_MONTHS) : NaN;
+              if (!(months >= 1 && months <= a.EXTEND_MAX_MONTHS)) {
+                return reply(`Format: \`/verlaengern [Monate]\` mit 1–${a.EXTEND_MAX_MONTHS} Monaten, ohne Angabe ${a.EXTEND_MAX_MONTHS}.`);
+              }
+              // ab bisherigem Ablaufdatum, bei bereits abgelaufenen ab heute
+              const current = (await a.findExpiry(github, context, nr)) || a.today();
+              const base = current > a.today() ? current : a.today();
+              const expiry = a.addMonths(base, months);
+              const f = a.parseBody(issue.body);
+              await a.removeLabel(github, context, nr, a.LABEL.laeuftAb);
+              await a.removeLabel(github, context, nr, a.LABEL.abgelaufen);
+              await react('+1');
+              await a.comment(github, context, nr, `@${issue.user.login} ` + (en
+                ? `⏳ @${c.user.login} extended the VM \`${f.projektname}\` by ${months} month${months > 1 ? 's' : ''}. New expiry date: **${a.formatDate(expiry, true)}**.`
+                : `⏳ @${c.user.login} hat die VM \`${f.projektname}\` um ${months} Monat${months > 1 ? 'e' : ''} verlängert. Neues Ablaufdatum: **${a.formatDate(expiry, false)}**.`) +
+                `\n${a.expiryMarker(expiry)}`);
             }

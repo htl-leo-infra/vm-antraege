@@ -16,7 +16,7 @@ ifdef::env-github[]
 endif::[]
 
 Technische Beschreibung der GitHub-Actions-Workflows für Admins
-(Freigabe, IP-Vergabe, VM-Erstellung) und Betreuer*innen des Repos.
+(Freigabe, IP-Vergabe, VM-Erstellung), betreuende Lehrkräfte und Betreuer*innen des Repos.
 
 [[grundprinzip]]
 == Grundprinzip
@@ -40,30 +40,41 @@ Setzt der Bot z.B. `status: neu`, reagiert kein anderer Workflow darauf.
 
 |Label hinzugefügt
 |`status.yaml` („Status")
-|Label `vm-antrag` und Label = `status: freigegeben`, `status: erstellt` oder `abgelehnt`
+|Label `vm-antrag` und Label = `status: av-freigegeben`, `status: erstellt` oder `abgelehnt`
 
 |Kommentar geschrieben
 |`kommandos.yaml` („Kommandos")
-|beginnt mit `/ip` oder `/ablehnen`, Label `vm-antrag`
+|beginnt mit `/freigeben`, `/ip`, `/ablehnen` oder `/verlaengern`, Label `vm-antrag`
+
+|täglich 05:17 UTC (oder manuell)
+|`ablauf.yaml` („Ablauf")
+|alle offenen Issues mit `vm-antrag` und `status: erstellt`
 |===
 
 .Status-Kette
 [source,text]
 ----
-(Antrag) ──► ungültig ◄──► status: neu ──► status: freigegeben ──► status: ip-vergeben ──► status: erstellt
-              Bot            Bot            Peter (Label)          Himmelbauer (/ip)        Wagner/Brückner (Label)
+(Antrag) ──► ungültig ◄──► status: neu ──► status: betreuer-freigegeben ──► status: av-freigegeben ──► status: ip-vergeben ──► status: erstellt
+              Bot            Bot            Lehrkraft (/freigeben)           Peter (Label)            Himmelbauer (/ip)        Wagner/Brückner (Label)
 
 Jederzeit vor „erstellt":  /ablehnen <Begründung>  oder Label abgelehnt  ──► abgelehnt + Issue geschlossen
+Nach „erstellt":           30 Tage vor Ablauf ──► läuft ab ──► abgelaufen      /verlaengern [Monate] ──► neues Ablaufdatum
 ----
 
-.Kommandos (nur Rolle Triage oder höher)
-[cols="2,3",options="header"]
+.Kommandos
+[cols="2,2,3",options="header"]
 |===
-|Kommando |Wirkung
+|Kommando |Wer |Wirkung
 
-|`/ip <adresse>` |IP eintragen, nur bei `status: freigegeben` (<<ip>>)
-|`/ablehnen <Begründung>` |Antrag ablehnen und schließen (<<ablehnen>>)
+|`/freigeben` |Lehrkraft, Triage |Freigabe durch die Lehrkraft, nur bei `status: neu` (<<lehrkraft>>)
+|`/ip <adresse>` |Triage |IP eintragen, nur bei `status: av-freigegeben` (<<ip>>)
+|`/ablehnen <Begründung>` |Lehrkraft, Triage |Antrag ablehnen und schließen (<<ablehnen>>)
+|`/verlaengern [Monate]` |Lehrkraft, Triage |Nutzungsdauer verlängern, nur bei `status: erstellt` (<<verlaengern>>)
 |===
+
+_Lehrkraft_ = der GitHub-Account im Feld _GitHub-Name der betreuenden Lehrkraft_ (nie die
+Antragsteller*in selbst). _Triage_ = Rolle Triage oder höher, d.h. Team `vm-admins`.
+Lehrkräfte brauchen keine Rechte im Repo.
 
 [[personen]]
 === Zuständige Personen
@@ -74,7 +85,7 @@ Die erwähnten Personen kommen aus Repo-Variablen. Ohne Variable gilt der Defaul
 |===
 |Variable |Aufgabe |Default
 
-|`FREIGABE` |Freigabe des Antrags |`bauepete`
+|`FREIGABE` |Freigabe durch die Abteilung (AV), nach der Lehrkraft |`bauepete`
 |`IP_VERGABE` |IP-Adresse eintragen (Sysadmin Thomas Himmelbauer) |`ghbugfinder`
 |`VM_ERSTELLUNG` |VM in Proxmox anlegen („Mailverteiler") |`Master-Andi MWagnerOE5AOO`
 |===
@@ -96,7 +107,8 @@ gh variable set IP_VERGABE -R htl-leo-infra/vm-antraege --body <username>
 . *Doppelte Namen suchen* — alle *offenen* Anträge (außer `abgelehnt`) laden und deren
   Projektnamen und DNS-Namen auslesen.
 . *Prüfen:*
-** *Fehler:* Teammitglieder leer oder kein gültiger Schul-Benutzername
+** *Fehler:* Lehrkraft kein gültiger GitHub-Benutzername, existiert nicht (API-Abfrage) oder
+   ist die Antragsteller*in selbst; Teammitglieder leer oder kein gültiger Schul-Benutzername
    (`^(ad|kd|if|it|el|bg)\d{6}$`, z.B. `if123456`); Name ungültig (`^[a-z][a-z0-9-]{2,29}$`) oder bereits vergeben; DNS Name bereits
    von einem anderen offenen Antrag mit Internet „Yes" belegt; bei Internet
    „Yes" fehlen Ports oder DNS; Portnummer ungültig; DNS kein gültiger Hostname
@@ -104,9 +116,9 @@ gh variable set IP_VERGABE -R htl-leo-infra/vm-antraege --body <username>
    Internet „No"
 . *Mit Fehlern:* Label `ungültig`, Prüfkommentar mit allen Fehlern und unsichtbarer
   Markierung `<!-- vm-antrag:pruefung -->`. Ende — Peter wird *nicht* benachrichtigt.
-. *Ohne Fehler:* Label `status: neu`, Kommentar `@bauepete Neuer VM-Antrag … bitte freigeben`
-  und für die Schüler*innen „Danke, euer Antrag ist eingegangen".
-  *GitHub schickt Peter eine Mail* (wegen der Erwähnung).
+. *Ohne Fehler:* Label `status: neu`, Kommentar `Neuer VM-Antrag … betreuende Lehrkraft: @<lehrkraft>.
+  Bitte … /freigeben` und für die Schüler*innen „Danke, euer Antrag ist eingegangen".
+  *GitHub schickt der Lehrkraft eine Mail* (wegen der Erwähnung).
 
 NOTE: Die Sprache richtet sich nach dem Label `english`, das das englische Formular
 automatisch setzt. Texte an Schüler*innen sind dann englisch, Texte an Admins immer deutsch.
@@ -119,9 +131,11 @@ automatisch setzt. Texte an Schüler*innen sind dann englisch, Texte an Admins i
 * *Immer noch fehlerhaft:* Der *vorhandene* Prüfkommentar wird aktualisiert (erkannt an der
   Markierung) — kein neuer Kommentar.
 * *Jetzt korrekt:* Label `ungültig` weg, Prüfkommentar zeigt „✅ gültig". Ist noch kein
-  Status-Label gesetzt: `status: neu` und Mail an Peter.
-* *Bereits freigegeben und nachträglich bearbeitet* (Label `status: freigegeben`,
-  `status: ip-vergeben` oder `status: erstellt`): Der Bot vergleicht alten und neuen Stand
+  Status-Label gesetzt: `status: neu` und Mail an die Lehrkraft.
+* *Lehrkraft geändert, noch bei `status: neu`:* Die neue Lehrkraft wird erwähnt und um
+  `/freigeben` gebeten. Die alte Lehrkraft darf nicht mehr freigeben.
+* *Bereits freigegeben und nachträglich bearbeitet* (Label `status: betreuer-freigegeben`,
+  `status: av-freigegeben`, `status: ip-vergeben` oder `status: erstellt`): Der Bot vergleicht alten und neuen Stand
   (`changes.body.from`) und postet an `FREIGABE` und `VM_ERSTELLUNG` eine Tabelle
   *Feld | vorher | nachher*. Bei geänderten Teammitgliedern zusätzlich
   „*Teammitglieder geändert → Proxmox-Zugriff prüfen!*". Danach wird normal neu geprüft;
@@ -130,20 +144,38 @@ automatisch setzt. Texte an Schüler*innen sind dann englisch, Texte an Admins i
 IMPORTANT: Die Teammitglieder (Schul-Benutzernamen) bekommen Zugriff auf die Proxmox-Oberfläche.
 Eine Änderung nach der Freigabe muss deshalb immer geprüft werden.
 
-[[freigabe]]
-== Peter gibt frei
+[[lehrkraft]]
+== Lehrkraft gibt frei
 
-*Aktion:* Peter setzt das Label `status: freigegeben` (braucht Rolle Triage, d.h. Mitglied
+*Aktion:* Die betreuende Lehrkraft kommentiert `/freigeben`.
+
+*Ereignis:* `issue_comment: created` → Workflow *Kommandos* (Zweig `/freigeben`)
+
+. *Berechtigung prüfen* — Kommentiert die eingetragene Lehrkraft oder jemand mit Triage?
+  Sonst still ignoriert. Ein Admin kann so stellvertretend freigeben, wenn die Lehrkraft
+  nicht erreichbar ist.
+. *Status prüfen* — Nur bei `status: neu` und ohne `ungültig`, sonst 😕 und Hinweis.
+. *Erfolg:* Label `status: neu` → `status: betreuer-freigegeben`, 👍-Reaktion, Kommentar
+  `@<FREIGABE> Antrag … wurde von @<lehrkraft> (betreuende Lehrkraft) freigegeben. Bitte …
+  mit Label status: av-freigegeben freigeben` und für die Schüler*innen „Eure betreuende
+  Lehrkraft hat den Antrag freigegeben". *Peter bekommt eine Mail.*
+
+[[freigabe]]
+== Peter gibt frei (AV)
+
+*Aktion:* Peter setzt das Label `status: av-freigegeben` (braucht Rolle Triage, d.h. Mitglied
 im Team `vm-admins`).
 
-*Ereignis:* `issues: labeled` → Workflow *Status* (Zweig `status: freigegeben`)
+*Ereignis:* `issues: labeled` → Workflow *Status* (Zweig `status: av-freigegeben`)
 
-. Label `status: neu` entfernen.
+. *Reihenfolge* — Normalerweise nach der Lehrkraft. Peter darf aber auch direkt bei
+  `status: neu` freigeben; der Kommentar vermerkt dann „(ohne Freigabe der Lehrkraft)".
+. Labels `status: neu` und `status: betreuer-freigegeben` entfernen.
 . Kommentar: `@<IP_VERGABE> Antrag … wurde von @bauepete freigegeben. Bitte /ip 10.x.x.x/24 public x.x.x.x/24`
   und für die Schüler*innen „Euer Antrag wurde freigegeben".
 . *Die Person für die IP-Vergabe bekommt eine Mail.*
 
-NOTE: Der Workflow *Status* startet bei jedem Label, läuft aber nur bei `status: freigegeben`,
+NOTE: Der Workflow *Status* startet bei jedem Label, läuft aber nur bei `status: av-freigegeben`,
 `status: erstellt` und `abgelehnt`. Alle anderen Labels werden übersprungen.
 
 [[ip]]
@@ -163,12 +195,12 @@ Präfix (`/24`) und öffentliche IP sind optional. Statt `public` geht auch `/pu
 
 . *Berechtigung prüfen* — Rolle der kommentierenden Person im Repo abfragen. Unter Triage
   (z.B. Schüler*innen): nur Log-Eintrag, *kein sichtbarer Kommentar*.
-. *Status prüfen* — Ohne Label `status: freigegeben`: 😕-Reaktion und Hinweis
-  „/ip geht nur bei Label status: freigegeben".
+. *Status prüfen* — Ohne Label `status: av-freigegeben`: 😕-Reaktion und Hinweis
+  „/ip geht nur bei Label status: av-freigegeben".
 . *IP prüfen* — Nur die erste Zeile zählt: interne IPv4 mit optionalem Präfix (≤ 32),
   optional `public <IPv4>[/Präfix]`. Sonst 😕 und Formathinweis.
 . *Erfolg:*
-** Label `status: freigegeben` → `status: ip-vergeben`
+** Label `status: av-freigegeben` → `status: ip-vergeben`
 ** 👍-Reaktion auf den Kommentar
 ** Kommentar `@MWagnerOE5AOO @Master-Andi Bitte VM anlegen …` mit *Tabelle aller Daten*
    und IP, für die Schüler*innen „IP-Adresse eurer VM: …"
@@ -182,18 +214,60 @@ Präfix (`/24`) und öffentliche IP sind optional. Statt `public` geht auch `/pu
 
 *Ereignis:* `issues: labeled` → Workflow *Status* (Zweig `status: erstellt`)
 
-. Alle vorherigen Status-Labels entfernen (`status: neu`, `status: freigegeben`,
-  `status: ip-vergeben`) — auch wenn Schritte übersprungen wurden.
+. Alle vorherigen Status-Labels entfernen (`status: neu`, `status: betreuer-freigegeben`,
+  `status: av-freigegeben`, `status: ip-vergeben`) — auch wenn Schritte übersprungen wurden.
+. *Security-Checkliste* (Lynis, Fail2Ban, ClamAV, WAF, SSH-Härtung) an den Issue-Body hängen,
+  erkennbar an `<!-- vm-antrag:security -->`. Die Antragsteller*in kann als Autor*in abhaken.
+  Wird das Label erneut gesetzt, kommt keine zweite Checkliste.
+. *Ablaufdatum* = heute + 12 Monate (bleibt beim erneuten Setzen des Labels gleich).
 . Kommentar `@<antragsteller*in> 🎉 Eure VM … ist bereit. Zugangsdaten auf anderem Weg …`
+  mit Hinweis auf die Checkliste, Ablaufdatum und unsichtbarem Marker `<!-- ablauf: JJJJ-MM-TT -->`.
 . *Die Antragsteller*in bekommt eine Mail.*
 
 WARNING: Zugangsdaten zur VM niemals im Issue posten — das Repo ist öffentlich.
 
+NOTE: Abhaken der Checkliste ist eine Bearbeitung des Issues und startet *Antrag prüfen*.
+Die Checkliste ist kein Formularfeld, es gibt also keinen Änderungshinweis an die Admins.
+
+[[verlaengern]]
+== Nutzungsdauer und Verlängerung
+
+*Ablaufdatum:* steht als Marker `<!-- ablauf: JJJJ-MM-TT -->` in Bot-Kommentaren. Es gilt
+der *letzte* Bot-Kommentar mit Marker. Marker in Kommentaren von Personen werden ignoriert.
+
+=== Täglicher Workflow *Ablauf*
+
+*Ereignis:* `schedule` (täglich 05:17 UTC) oder manuell (`workflow_dispatch`)
+
+Für jedes offene Issue mit `vm-antrag` und `status: erstellt`:
+
+. *Kein Ablaufdatum* (ältere Anträge): Ablaufdatum = heute + 12 Monate nachtragen.
+. *Höchstens 30 Tage bis Ablauf:* Label `läuft ab`, Erinnerung an Antragsteller*in und
+  Lehrkraft mit Hinweis auf `/verlaengern`. Einmalig (solange das Label gesetzt ist).
+. *Ablauftag erreicht:* Label `läuft ab` → `abgelaufen`, Kommentar an Antragsteller*in,
+  Lehrkraft und `VM_ERSTELLUNG`: noch benötigt → `/verlaengern`, sonst VM in Proxmox löschen
+  und Issue schließen. *Es wird nichts automatisch gelöscht.*
+
+[source,bash]
+----
+gh workflow run ablauf.yaml -R htl-leo-infra/vm-antraege   # manuell starten
+----
+
+=== Kommando `/verlaengern [Monate]`
+
+*Ereignis:* `issue_comment: created` → Workflow *Kommandos* (Zweig `/verlaengern`)
+
+. *Berechtigung* — eingetragene Lehrkraft oder Triage, sonst still ignoriert.
+. *Status* — nur bei offenem Issue mit `status: erstellt`.
+. *Monate* — 1–12, ohne Angabe 12. Sonst 😕 und Formathinweis.
+. *Neues Datum* — ab bisherigem Ablaufdatum, bei bereits abgelaufenen ab heute.
+. Labels `läuft ab` und `abgelaufen` entfernen, 👍, Kommentar mit neuem Datum und Marker.
+
 [[ablehnen]]
 == Antrag ablehnen
 
-Jede Person mit Rolle Triage kann einen Antrag ablehnen — jederzeit, solange die VM noch
-nicht erstellt ist.
+Jede Person mit Rolle Triage und die eingetragene Lehrkraft können einen Antrag ablehnen —
+jederzeit, solange die VM noch nicht erstellt ist.
 
 === Empfohlen: Kommando mit Begründung
 
@@ -204,7 +278,7 @@ nicht erstellt ist.
 
 *Ereignis:* `issue_comment: created` → Workflow *Kommandos* (Zweig `/ablehnen`)
 
-. *Berechtigung prüfen* — wie bei `/ip`. Ohne Triage: still ignoriert.
+. *Berechtigung prüfen* — Triage oder eingetragene Lehrkraft, sonst still ignoriert.
 . *Bereits abgelehnt?* — 😕 und Hinweis „bereits abgelehnt".
 . *Begründung Pflicht* — `/ablehnen` ohne Text: 😕 und Hinweis `/ablehnen <Begründung>`.
   Die Begründung ist alles nach `/ablehnen`, auch mehrzeilig.
@@ -220,7 +294,8 @@ Kommentaren oben" — der Admin sollte sie vorher selbst schreiben.
 
 . *VM existiert schon* (`status: erstellt`): *nichts wird geschlossen*. Nur Hinweis an die
   Admins: VM zuerst in Proxmox löschen, dann Issue manuell schließen.
-. Status-Labels `status: neu` / `status: freigegeben` / `status: ip-vergeben` entfernen,
+. Status-Labels `status: neu` / `status: betreuer-freigegeben` / `status: av-freigegeben` /
+  `status: ip-vergeben` entfernen,
   Label `abgelehnt` setzen (falls noch nicht gesetzt).
 . Kommentar an die Antragsteller*in (DE/EN): „❌ Euer Antrag wurde von @… abgelehnt" +
   Begründung + „Ihr könnt gerne einen neuen, korrigierten Antrag stellen."
@@ -269,6 +344,11 @@ Labels nur für Admins::
 Schüler*innen können als Autor*innen keine Labels setzen. Die Status-Kette lässt sich
 nicht fälschen.
 
+Lehrkraft-Freigabe::
+Schüler*innen tragen die Lehrkraft selbst ein. Sich selbst einzutragen wird abgelehnt; ein
+anderer Account (z.B. Mitschüler*in) fällt erst bei der AV-Freigabe auf. Deshalb prüft Peter
+danach immer noch. Eine Änderung der Lehrkraft nach der Freigabe meldet der Bot an die Admins.
+
 [[grenzen]]
 == Grenzen und offene Punkte
 
@@ -276,6 +356,11 @@ nicht fälschen.
   abgeschnitten. Selten und harmlos.
 . *Team nötig* — Ohne Team `vm-admins` (Rolle Triage) können die Admins weder Labels setzen
   noch `/ip` bzw. `/ablehnen` verwenden.
+. *Zeitplan pausiert* — GitHub deaktiviert `schedule`-Workflows in öffentlichen Repos nach
+  60 Tagen ohne Aktivität im Repo. Dann unter _Actions → Ablauf → Enable workflow_ wieder
+  einschalten.
+. *Alte Anträge* — Anträge mit dem früheren Feld _Betreuende Lehrkraft_ (echter Name) werden
+  noch gelesen, wären bei einer Bearbeitung aber `ungültig`.
 
 [[test]]
 == Testen
@@ -288,6 +373,8 @@ löschen:
 gh variable set FREIGABE -R htl-leo-infra/vm-antraege --body htl-leonding
 gh variable set VM_ERSTELLUNG -R htl-leo-infra/vm-antraege --body htl-leonding
 # … Test-Issues durchspielen …
+# Lehrkraft-Schritt: als Antragsteller*in kann man nicht selbst Lehrkraft sein –
+# entweder zweiten Account eintragen oder /freigeben mit Triage (stellvertretend)
 gh variable delete FREIGABE -R htl-leo-infra/vm-antraege
 gh variable delete VM_ERSTELLUNG -R htl-leo-infra/vm-antraege
 ----
