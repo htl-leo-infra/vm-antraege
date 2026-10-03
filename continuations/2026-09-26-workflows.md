@@ -38,7 +38,7 @@ Lies zuerst `CLAUDE.md` und `docs/anforderungen.md`.
 
 ## Nächste Schritte
 
-### Schritt 5: Anforderungen Mail Michael 02.10. – ✅ umgesetzt (03.10.), Live-Test offen
+### Schritt 5: Anforderungen Mail Michael 02.10. – ✅ umgesetzt und gepusht (03.10., `78e0e94`), Live-Test offen
 Umgesetzt (Details `docs/ablauf.adoc`, Simulation mit gemocktem API lokal bestanden):
 1. Feld „GitHub-Name der betreuenden Lehrkraft“ (alte Feld-Labels bleiben in der Map); Prüfung: gültiger Username, existiert (API), ≠ Antragsteller*in; Lehrkraft wird erwähnt, bei Wechsel vor Freigabe die neue
 2. `/freigeben` (Lehrkraft oder Triage stellvertretend) → `status: betreuer-freigegeben` + @FREIGABE; Peter setzt `status: av-freigegeben` (normal danach, darf aber auch direkt – Vermerk im Kommentar); `/ip` nur bei `av-freigegeben`; Lehrkraft darf auch `/ablehnen`
@@ -46,8 +46,9 @@ Umgesetzt (Details `docs/ablauf.adoc`, Simulation mit gemocktem API lokal bestan
 4. Ablaufdatum +12 Monate (Marker `<!-- ablauf: JJJJ-MM-TT -->` im letzten Bot-Kommentar); `/verlaengern [1–12]` (Lehrkraft/Triage); `ablauf.yaml` täglich 05:17 UTC: ≤30 Tage → `läuft ab`, Ablauftag → `abgelaufen` + @VM_ERSTELLUNG, keine Auto-Löschung; Anträge ohne Marker (z.B. #12) bekommen beim ersten Lauf heute+12 Monate
 5. ✅ DNS-Domain: keine Domain-Einschränkung vorhanden – keine Änderung nötig
 
+✅ Labels (03.10.): `status: freigegeben` → `status: av-freigegeben` umbenannt; neu `status: betreuer-freigegeben`, `läuft ab`, `abgelaufen`
+
 Noch zu tun:
-- Labels (gh API, nach OK): `status: freigegeben` → `status: av-freigegeben` umbenennen; neu `status: betreuer-freigegeben`, `läuft ab`, `abgelaufen`
 - End-to-End-Test live (Variablen auf `htl-leonding` setzen; Lehrkraft-Schritt mit zweitem Account oder `/freigeben` als Triage)
 - Peter, Lehrkräfte informieren: neuer Ablauf, Peter setzt jetzt `status: av-freigegeben`
 
