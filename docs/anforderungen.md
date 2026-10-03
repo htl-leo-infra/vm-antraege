@@ -84,11 +84,25 @@ Umsetzung (noch offen):
 - [ ] **Security-Checkliste nach Erstellung:** Bei `status: erstellt` bekommt das Issue eine Checkliste (Lynis, Fail2Ban, ClamAV, WAF, SSH-Härtung) zum Abhaken durch die Schüler*innen.
 - [ ] **Nutzungsdauer:** Standard automatisch 1 Jahr. Die betreuende Lehrkraft kann verlängern.
 
+Entscheidungen (03.10.2026, Thomas Stütz):
+
+- **Freigabe durch die Lehrkraft per Kommando** `/freigeben`. Der Workflow akzeptiert es nur von dem GitHub-Account, der im Antrag als betreuende Lehrkraft eingetragen ist. Lehrkräfte brauchen keine Rechte im Repo.
+- Feld **Nutzungsdauer** bleibt vorläufig im Formular, dient aber nur zur Information.
+
+### Vorschlag: Ablauf und Verlängerung (mit Michael abzustimmen)
+
+- **Ablaufdatum:** Bei `status: erstellt` setzt der Workflow das Ablaufdatum auf Erstellung + 1 Jahr. Der Bot schreibt es in seinen Kommentar, sichtbar und als versteckter Marker `<!-- ablauf: JJJJ-MM-TT -->`. Der Bot-Kommentar ist für Schüler*innen nicht bearbeitbar, der Issue-Text schon.
+- **Kommando `/verlaengern [Monate]`:** nur von der eingetragenen Lehrkraft oder Team `vm-admins`, sonst ignoriert. Standard 12 Monate, höchstens 12 pro Kommando, gerechnet ab dem bisherigen Ablaufdatum. Der Bot bestätigt mit neuem Datum und Marker und entfernt die Labels `läuft ab` und `abgelaufen`.
+- **Workflow `ablauf.yaml`** (täglich per Zeitplan, `issues: write`):
+  - 30 Tage vor Ablauf: Label `läuft ab`, Kommentar an Antragsteller*in und Lehrkraft mit Hinweis auf `/verlaengern`.
+  - Am Ablauftag: Label `abgelaufen`, Kommentar an Lehrkraft und @VM_ERSTELLUNG, dass die VM gelöscht werden kann.
+  - Keine automatische Löschung. Die Admins löschen die VM in Proxmox und schließen das Issue. Geschlossene Issues werden nicht mehr geprüft.
+- **Neue Labels:** `läuft ab`, `abgelaufen`.
+
 Fragen an Michael:
 
-- Darf eine Lehrkraft Labels setzen? Mit Triage-Rolle wären Lehrkräfte im Team `vm-admins` bzw. in einem eigenen Team. Alternative: ein Kommando wie `/freigeben`, das der Workflow nur von der eingetragenen Lehrkraft akzeptiert.
-- Wie verlängert die Lehrkraft (Kommando `/verlaengern`, Label)? Was passiert nach Ablauf (Erinnerung, Löschung)?
-- Das Feld „Nutzungsdauer“ entfällt im Formular oder wird als Info mit 1 Jahr angezeigt?
+- Passt der Vorschlag zu Ablauf und Verlängerung?
+- Reichen 30 Tage Vorwarnung, oder zusätzlich eine Erinnerung 7 Tage vorher?
 
 ## Offene Punkte
 
