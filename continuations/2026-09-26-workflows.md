@@ -24,7 +24,7 @@ Lies zuerst `CLAUDE.md` und `docs/anforderungen.md`.
   - `status.yaml` – Label `status: freigegeben` → @IP_VERGABE · `status: erstellt` → Nachricht an Antragsteller*in · `abgelehnt` → Ablehnung ohne Begründung (Rückfall)
   - `kommandos.yaml` – nur Triage+: `/ip x.x.x.x` → `status: ip-vergeben` + Zusammenfassung an @VM_ERSTELLUNG · `/ablehnen <Begründung>` → Ablehnung mit Begründung
   - Ablehnung (`reject()` in `antrag.js`): Status-Labels weg, `abgelehnt`, Kommentar, schließen (not planned); bei `ip-vergeben` @IP_VERGABE; bei `erstellt` nur Hinweis, nicht schließen
-- Repo-Variablen **gesetzt (29.09.)**: `FREIGABE`=bauepete, `IP_VERGABE`=ghbugfinder (Sysadmin Himmelbauer, ab 30.09.), `VM_ERSTELLUNG`=`Master-Andi MWagnerOE5AOO`
+- Repo-Variablen **gesetzt (29.09.)**: `FREIGABE`=bauepete, `IP_VERGABE`=ghbugfinder (Sysadmin Himmelbauer, ab 30.09.; Einladung am 03.10. noch offen), `VM_ERSTELLUNG`=`Master-Andi MWagnerOE5AOO`
 - End-to-End-Test bestanden (Issues #1, #2, geschlossen „not planned“); Test-Variablen gelöscht
 - Workflows zusammengelegt (freigabe/erstellt/ip-eintragen → status + kommandos), `/ablehnen` ergänzt – end-to-end getestet (#3–#5); nur „Ablehnen bei erstellt“ lediglich lokal getestet
 - DNS Name muss unter offenen Anträgen mit Internet „Yes“ eindeutig sein
@@ -32,8 +32,18 @@ Lies zuerst `CLAUDE.md` und `docs/anforderungen.md`.
 - Team `vm-admins` (Triage auf vm-antraege), Stand 01.10.: aktiv `htl-leonding` (Maintainer), `MWagnerOE5AOO` (hat getestet: #8, #9), `bauepete`, `Master-Andi`; **`ghbugfinder` (Sysadmin Himmelbauer) eingeladen 30.09., noch nicht angenommen** – bis dahin wird sein `/ip` ignoriert, Michael kann einspringen
 - Leitfäden DE/EN: eigener Abschnitt `[[security]]` „Security“ aus Michaels Kurzanleitung (Lynis, ClamAV, Fail2Ban, WAF Apache/Nginx, SSH-Härtung, Ablaufempfehlung); „Backup-Prozess“ umformuliert zu „beim Anlegen des Containers mitinstalliert“ (30.09.)
 - Mail Michael 29.09. umgesetzt: Leitfaden-Abschnitt „Absicherung und Überwachung“ (DE/EN); Teammitglieder = Schul-Benutzernamen (`^(ad|kd|if|it|el|bg)\d{6}$`) mit Validierung; Hinweis an Admins bei Änderung nach Freigabe (Diff-Tabelle); `/ip` mit Präfix + optional `public <ip>`; `status: erstellt` entfernt alle vorherigen Status-Labels
+- Mail Michael 02.10. (nach Vorstellung) in `docs/anforderungen.md` dokumentiert (Originaltext + Umsetzungspunkte); Entscheidungen 03.10.: Lehrkraft-Freigabe per Kommando `/freigeben`, Feld „Nutzungsdauer“ bleibt vorläufig (nur Info); Vorschlag Ablauf/Verlängerung dokumentiert, mit Michael abzustimmen
+- Stand 03.10.: Issue #12 `[VM] meine-erste-vm` offen mit `status: erstellt` (Test oder echt? klären)
 
 ## Nächste Schritte
+
+### Schritt 5: Anforderungen Mail Michael 02.10. umsetzen (siehe `docs/anforderungen.md`)
+Jede Feldänderung in beiden Formularen + Leitfäden DE/EN + Label-Map in `antrag.js`.
+1. Feld „Betreuende Lehrkraft“ → GitHub-Username (Prüfung, ob Account existiert); Lehrkraft per @-Mention benachrichtigen
+2. Zweistufige Freigabe: `/freigeben` (nur eingetragene Lehrkraft) → Label `Betreuer freigabe`, danach Peter → Label `AV freigabe` (ersetzt `status: freigegeben`); erst dann IP-Vergabe. Labelnamen ggf. an Konvention `status: …` anpassen – mit mir klären
+3. Security-Checkliste (Lynis, Fail2Ban, ClamAV, WAF, SSH-Härtung) als Kommentar bei `status: erstellt`
+4. Nutzungsdauer Standard 1 Jahr, `/verlaengern [Monate]` + täglicher Workflow `ablauf.yaml` (Labels `läuft ab`, `abgelaufen`) – erst nach Michaels OK zum Vorschlag
+5. DNS-Domain: Workflow prüft `htl-leonding.ac.at` derzeit gar nicht (nur Platzhalter) – mit Michael klären, was gemeint ist
 
 ### Schritt 4: Team `vm-admins` – ✅ weitgehend erledigt (Befehle zur Referenz)
 Befehle vorbereitet, **noch nicht ausführen**:
@@ -56,6 +66,7 @@ gh api -X PATCH orgs/htl-leo-infra -F members_can_create_repositories=false
 - Nicht getestet: `/ip`/`/ablehnen` von Nicht-Admin wird ignoriert (braucht zweiten Account)
 - Einladung `ghbugfinder` angenommen? `gh api orgs/htl-leo-infra/invitations`
 - Stufen CPU/RAM/Disk mit Michael Wagner abstimmen
-- „Löschen nach Nutzungsdauer“ (Leitfaden) mit Michael abstimmen
+- Michael fragen: Vorschlag Ablauf/Verlängerung ok? 30 Tage Vorwarnung reicht oder zusätzlich 7 Tage?
+- „Löschen nach Nutzungsdauer“ (Leitfaden) mit Michael abstimmen → Teil des Ablauf-Vorschlags (Schritt 5.4)
 - Echter Mailverteiler später (Office365 via Graph API, Funktionspostfach, Schul-IT)
 - Später: automatische VM-Erstellung (Self-hosted Runner im Schulnetz + Proxmox-API)
