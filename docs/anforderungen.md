@@ -80,7 +80,7 @@ Umsetzung (noch offen):
 
 - [ ] **DNS-Name:** keine Einschränkung auf `htl-leonding.ac.at`. Derzeit prüft der Workflow die Domain gar nicht (nur Eindeutigkeit), `htl-leonding.ac.at` steht nur im Platzhalter. Mit Michael klären, wo die Prüfung auftritt.
 - [ ] **Betreuende Lehrkraft:** Feld wird GitHub-Username (eventuell mit Prüfung, ob der Account existiert). Die Lehrkraft wird per @-Mention benachrichtigt und gibt als Erste frei.
-- [ ] **Zweistufige Freigabe:** Label `status: freigegeben` wird ersetzt durch `Betreuer freigabe` (zuerst, Lehrkraft) und danach `AV freigabe` (Peter Bauer). Erst nach beiden geht es zur IP-Vergabe.
+- [ ] **Zweistufige Freigabe:** Label `status: freigegeben` wird ersetzt durch `status: betreuer-freigegeben` (zuerst, Lehrkraft per `/freigeben`) und danach `status: av-freigegeben` (Peter Bauer). Erst nach beiden geht es zur IP-Vergabe.
 - [ ] **Security-Checkliste nach Erstellung:** Bei `status: erstellt` bekommt das Issue eine Checkliste (Lynis, Fail2Ban, ClamAV, WAF, SSH-Härtung) zum Abhaken durch die Schüler*innen.
 - [ ] **Nutzungsdauer:** Standard automatisch 1 Jahr. Die betreuende Lehrkraft kann verlängern.
 
@@ -88,8 +88,10 @@ Entscheidungen (03.10.2026, Thomas Stütz):
 
 - **Freigabe durch die Lehrkraft per Kommando** `/freigeben`. Der Workflow akzeptiert es nur von dem GitHub-Account, der im Antrag als betreuende Lehrkraft eingetragen ist. Lehrkräfte brauchen keine Rechte im Repo.
 - Feld **Nutzungsdauer** bleibt vorläufig im Formular, dient aber nur zur Information.
+- **Labels nach Konvention `status: …`:** `status: betreuer-freigegeben` (statt „Betreuer freigabe“), `status: av-freigegeben` (statt „AV freigabe“). Ablauf: `status: neu` → `status: betreuer-freigegeben` → `status: av-freigegeben` → `status: ip-vergeben` → `status: erstellt`.
+- **Ablauf und Verlängerung** wie unten festgelegt, ohne Abstimmung mit Michael. Bei Bedarf wird später angepasst.
 
-### Vorschlag: Ablauf und Verlängerung (mit Michael abzustimmen)
+### Ablauf und Verlängerung
 
 - **Ablaufdatum:** Bei `status: erstellt` setzt der Workflow das Ablaufdatum auf Erstellung + 1 Jahr. Der Bot schreibt es in seinen Kommentar, sichtbar und als versteckter Marker `<!-- ablauf: JJJJ-MM-TT -->`. Der Bot-Kommentar ist für Schüler*innen nicht bearbeitbar, der Issue-Text schon.
 - **Kommando `/verlaengern [Monate]`:** nur von der eingetragenen Lehrkraft oder Team `vm-admins`, sonst ignoriert. Standard 12 Monate, höchstens 12 pro Kommando, gerechnet ab dem bisherigen Ablaufdatum. Der Bot bestätigt mit neuem Datum und Marker und entfernt die Labels `läuft ab` und `abgelaufen`.
@@ -98,11 +100,6 @@ Entscheidungen (03.10.2026, Thomas Stütz):
   - Am Ablauftag: Label `abgelaufen`, Kommentar an Lehrkraft und @VM_ERSTELLUNG, dass die VM gelöscht werden kann.
   - Keine automatische Löschung. Die Admins löschen die VM in Proxmox und schließen das Issue. Geschlossene Issues werden nicht mehr geprüft.
 - **Neue Labels:** `läuft ab`, `abgelaufen`.
-
-Fragen an Michael:
-
-- Passt der Vorschlag zu Ablauf und Verlängerung?
-- Reichen 30 Tage Vorwarnung, oder zusätzlich eine Erinnerung 7 Tage vorher?
 
 ## Offene Punkte
 

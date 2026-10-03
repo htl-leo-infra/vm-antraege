@@ -32,7 +32,7 @@ Lies zuerst `CLAUDE.md` und `docs/anforderungen.md`.
 - Team `vm-admins` (Triage auf vm-antraege), Stand 01.10.: aktiv `htl-leonding` (Maintainer), `MWagnerOE5AOO` (hat getestet: #8, #9), `bauepete`, `Master-Andi`; **`ghbugfinder` (Sysadmin Himmelbauer) eingeladen 30.09., noch nicht angenommen** – bis dahin wird sein `/ip` ignoriert, Michael kann einspringen
 - Leitfäden DE/EN: eigener Abschnitt `[[security]]` „Security“ aus Michaels Kurzanleitung (Lynis, ClamAV, Fail2Ban, WAF Apache/Nginx, SSH-Härtung, Ablaufempfehlung); „Backup-Prozess“ umformuliert zu „beim Anlegen des Containers mitinstalliert“ (30.09.)
 - Mail Michael 29.09. umgesetzt: Leitfaden-Abschnitt „Absicherung und Überwachung“ (DE/EN); Teammitglieder = Schul-Benutzernamen (`^(ad|kd|if|it|el|bg)\d{6}$`) mit Validierung; Hinweis an Admins bei Änderung nach Freigabe (Diff-Tabelle); `/ip` mit Präfix + optional `public <ip>`; `status: erstellt` entfernt alle vorherigen Status-Labels
-- Mail Michael 02.10. (nach Vorstellung) in `docs/anforderungen.md` dokumentiert (Originaltext + Umsetzungspunkte); Entscheidungen 03.10.: Lehrkraft-Freigabe per Kommando `/freigeben`, Feld „Nutzungsdauer“ bleibt vorläufig (nur Info); Vorschlag Ablauf/Verlängerung dokumentiert, mit Michael abzustimmen
+- Mail Michael 02.10. (nach Vorstellung) in `docs/anforderungen.md` dokumentiert (Originaltext + Umsetzungspunkte); Entscheidungen 03.10.: Lehrkraft-Freigabe per Kommando `/freigeben`, Feld „Nutzungsdauer“ bleibt vorläufig (nur Info); Ablauf/Verlängerung festgelegt (30 Tage Vorwarnung, ohne Abstimmung mit Michael); Labels `status: betreuer-freigegeben`, `status: av-freigegeben`
 - Stand 03.10.: Issue #12 `[VM] meine-erste-vm` offen mit `status: erstellt` (Test oder echt? klären)
 
 ## Nächste Schritte
@@ -40,9 +40,9 @@ Lies zuerst `CLAUDE.md` und `docs/anforderungen.md`.
 ### Schritt 5: Anforderungen Mail Michael 02.10. umsetzen (siehe `docs/anforderungen.md`)
 Jede Feldänderung in beiden Formularen + Leitfäden DE/EN + Label-Map in `antrag.js`.
 1. Feld „Betreuende Lehrkraft“ → GitHub-Username (Prüfung, ob Account existiert); Lehrkraft per @-Mention benachrichtigen
-2. Zweistufige Freigabe: `/freigeben` (nur eingetragene Lehrkraft) → Label `Betreuer freigabe`, danach Peter → Label `AV freigabe` (ersetzt `status: freigegeben`); erst dann IP-Vergabe. Labelnamen ggf. an Konvention `status: …` anpassen – mit mir klären
+2. Zweistufige Freigabe: `/freigeben` (nur eingetragene Lehrkraft) → Label `status: betreuer-freigegeben`, danach Peter → Label `status: av-freigegeben` (ersetzt `status: freigegeben`); erst dann IP-Vergabe
 3. Security-Checkliste (Lynis, Fail2Ban, ClamAV, WAF, SSH-Härtung) als Kommentar bei `status: erstellt`
-4. Nutzungsdauer Standard 1 Jahr, `/verlaengern [Monate]` + täglicher Workflow `ablauf.yaml` (Labels `läuft ab`, `abgelaufen`) – erst nach Michaels OK zum Vorschlag
+4. Nutzungsdauer Standard 1 Jahr, `/verlaengern [Monate]` + täglicher Workflow `ablauf.yaml` (Labels `läuft ab`, `abgelaufen`) – festgelegt, siehe `docs/anforderungen.md`
 5. DNS-Domain: Workflow prüft `htl-leonding.ac.at` derzeit gar nicht (nur Platzhalter) – mit Michael klären, was gemeint ist
 
 ### Schritt 4: Team `vm-admins` – ✅ weitgehend erledigt (Befehle zur Referenz)
@@ -66,7 +66,6 @@ gh api -X PATCH orgs/htl-leo-infra -F members_can_create_repositories=false
 - Nicht getestet: `/ip`/`/ablehnen` von Nicht-Admin wird ignoriert (braucht zweiten Account)
 - Einladung `ghbugfinder` angenommen? `gh api orgs/htl-leo-infra/invitations`
 - Stufen CPU/RAM/Disk mit Michael Wagner abstimmen
-- Michael fragen: Vorschlag Ablauf/Verlängerung ok? 30 Tage Vorwarnung reicht oder zusätzlich 7 Tage?
-- „Löschen nach Nutzungsdauer“ (Leitfaden) mit Michael abstimmen → Teil des Ablauf-Vorschlags (Schritt 5.4)
+- Leitfaden „Löschen nach Nutzungsdauer“ bei Umsetzung von Schritt 5.4 anpassen
 - Echter Mailverteiler später (Office365 via Graph API, Funktionspostfach, Schul-IT)
 - Später: automatische VM-Erstellung (Self-hosted Runner im Schulnetz + Proxmox-API)
