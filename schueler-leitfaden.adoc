@@ -104,7 +104,7 @@ Welche Ports werden von außen weitergeleitet? Für eine Webseite meist `80, 443
 (`5432`, `3306`, …) oder SSH (`22`).
 
 DNS Name::
-Unter welchem Namen soll die VM erreichbar sein, z.B. `notenrechner.htl-leonding.ac.at`.
+Unter welchem Namen soll die VM erreichbar sein, z.B. `notenrechner.htl-leonding.ac.at`. Die Domain ist frei wählbar, sie muss nicht auf `htl-leonding.ac.at` enden.
 
 [WARNING]
 ====

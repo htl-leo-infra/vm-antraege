@@ -104,7 +104,7 @@ Which ports are forwarded from outside? For a website usually `80, 443`.
 (`5432`, `3306`, …) or SSH (`22`).
 
 DNS name::
-Under which name the VM should be reachable, e.g. `gradecalculator.htl-leonding.ac.at`.
+Under which name the VM should be reachable, e.g. `gradecalculator.htl-leonding.ac.at`. Any domain is allowed, it does not have to end in `htl-leonding.ac.at`.
 
 [WARNING]
 ====
