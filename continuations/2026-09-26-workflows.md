@@ -9,7 +9,7 @@ Lies zuerst `CLAUDE.md` und `docs/anforderungen.md`.
 - **Vor jeder ändernden Aktion** (Dateien, commit, push, gh-API-Änderungen) konkret vorschlagen und auf mein OK warten. Lesende Abfragen ohne Rückfrage.
 - Vor einem Push anhalten, wenn ich das verlange.
 - YAML-Dateien `.yaml`, Ausnahme `.github/ISSUE_TEMPLATE/config.yml` (GitHub erkennt nur `.yml`).
-- Tests nie mit echten Personen: vorher Repo-Variablen `FREIGABE`/`VM_ERSTELLUNG` auf `htl-leonding` setzen, danach löschen.
+- Tests nie mit echten Personen: vorher Repo-Variablen `FREIGABE`/`IP_VERGABE`/`VM_ERSTELLUNG` auf `htl-leonding` setzen, danach auf die echten Werte zurücksetzen (nicht löschen – Defaults weichen ab). Lehrkraft im Test: `ThomasStuetz` (Kommentare schreibt der User selbst).
 
 ## Erledigt (26.09.2026)
 
@@ -34,11 +34,11 @@ Lies zuerst `CLAUDE.md` und `docs/anforderungen.md`.
 - Mail Michael 29.09. umgesetzt: Leitfaden-Abschnitt „Absicherung und Überwachung“ (DE/EN); Teammitglieder = Schul-Benutzernamen (`^(ad|kd|if|it|el|bg)\d{6}$`) mit Validierung; Hinweis an Admins bei Änderung nach Freigabe (Diff-Tabelle); `/ip` mit Präfix + optional `public <ip>`; `status: erstellt` entfernt alle vorherigen Status-Labels
 - Mail Michael 02.10. (nach Vorstellung) in `docs/anforderungen.md` dokumentiert (Originaltext + Umsetzungspunkte); Entscheidungen 03.10.: Lehrkraft-Freigabe per Kommando `/freigeben`, Feld „Nutzungsdauer“ bleibt vorläufig (nur Info); Ablauf/Verlängerung festgelegt (30 Tage Vorwarnung, ohne Abstimmung mit Michael); Labels `status: betreuer-freigegeben`, `status: av-freigegeben`
 - Mit Michael nichts mehr offen (Stufen CPU/RAM/Disk akzeptiert, 03.10.)
-- Stand 03.10.: Issue #12 `[VM] meine-erste-vm` offen mit `status: erstellt` (Test oder echt? klären)
+- Issue #12 `[VM] meine-erste-vm` ist ein Test von Peter (`bauepete`), offen mit `status: erstellt` – bleibt vorerst
 
 ## Nächste Schritte
 
-### Schritt 5: Anforderungen Mail Michael 02.10. – ✅ umgesetzt und gepusht (03.10., `78e0e94`), Live-Test offen
+### Schritt 5: Anforderungen Mail Michael 02.10. – ✅ umgesetzt, gepusht (`78e0e94`) und live getestet (03.10.)
 Umgesetzt (Details `docs/ablauf.adoc`, Simulation mit gemocktem API lokal bestanden):
 1. Feld „GitHub-Name der betreuenden Lehrkraft“ (alte Feld-Labels bleiben in der Map); Prüfung: gültiger Username, existiert (API), ≠ Antragsteller*in; Lehrkraft wird erwähnt, bei Wechsel vor Freigabe die neue
 2. `/freigeben` (Lehrkraft oder Triage stellvertretend) → `status: betreuer-freigegeben` + @FREIGABE; Peter setzt `status: av-freigegeben` (normal danach, darf aber auch direkt – Vermerk im Kommentar); `/ip` nur bei `av-freigegeben`; Lehrkraft darf auch `/ablehnen`
@@ -48,8 +48,9 @@ Umgesetzt (Details `docs/ablauf.adoc`, Simulation mit gemocktem API lokal bestan
 
 ✅ Labels (03.10.): `status: freigegeben` → `status: av-freigegeben` umbenannt; neu `status: betreuer-freigegeben`, `läuft ab`, `abgelaufen`
 
+✅ Live-Test 03.10. (#13 DE, #14 EN, geschlossen): Lehrkraft = `ThomasStuetz` (nur Leserechte) – selbst eintragen → ungültig, `/freigeben`, AV-Label, `/ip`, erstellt (Checkliste + Ablaufdatum), Abhaken ohne Admin-Hinweis, `/verlaengern 3`, `ablauf.yaml` manuell (#12 Datum nachgetragen, Peter erwähnt), AV direkt ohne Lehrkraft, `/ip` von Lehrkraft ignoriert, `/ablehnen` durch Lehrkraft. Nur `läuft ab`/`abgelaufen` nicht live (Simulation ok). Variablen danach auf echte Werte zurückgesetzt (nicht löschen!)
+
 Noch zu tun:
-- End-to-End-Test live (Variablen auf `htl-leonding` setzen; Lehrkraft-Schritt mit zweitem Account oder `/freigeben` als Triage)
 - Peter, Lehrkräfte informieren: neuer Ablauf, Peter setzt jetzt `status: av-freigegeben`
 
 ### Schritt 4: Team `vm-admins` – ✅ weitgehend erledigt (Befehle zur Referenz)
@@ -70,7 +71,7 @@ gh api -X PATCH orgs/htl-leo-infra -F members_can_create_repositories=false
 
 ### Weitere offene Punkte
 - Optional d): `members_can_create_repositories=false`
-- Nicht live getestet: Kommandos von Nicht-Berechtigten werden ignoriert (braucht zweiten Account; in Simulation ok)
+- Live getestet: `/ip` von Nicht-Triage wird ignoriert; Schüler*innen-Account ohne Rechte noch nicht live (Simulation ok)
 - Einladung `ghbugfinder` angenommen? `gh api orgs/htl-leo-infra/invitations`
 - Echter Mailverteiler später (Office365 via Graph API, Funktionspostfach, Schul-IT)
 - Später: automatische VM-Erstellung (Self-hosted Runner im Schulnetz + Proxmox-API)
