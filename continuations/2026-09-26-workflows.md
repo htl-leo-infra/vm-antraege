@@ -43,7 +43,7 @@ Jede Feldänderung in beiden Formularen + Leitfäden DE/EN + Label-Map in `antra
 2. Zweistufige Freigabe: `/freigeben` (nur eingetragene Lehrkraft) → Label `status: betreuer-freigegeben`, danach Peter → Label `status: av-freigegeben` (ersetzt `status: freigegeben`); erst dann IP-Vergabe
 3. Security-Checkliste (Lynis, Fail2Ban, ClamAV, WAF, SSH-Härtung) als Kommentar bei `status: erstellt`
 4. Nutzungsdauer Standard 1 Jahr, `/verlaengern [Monate]` + täglicher Workflow `ablauf.yaml` (Labels `läuft ab`, `abgelaufen`) – festgelegt, siehe `docs/anforderungen.md`
-5. DNS-Domain: Workflow prüft `htl-leonding.ac.at` derzeit gar nicht (nur Platzhalter) – mit Michael klären, was gemeint ist
+5. ✅ DNS-Domain: keine Domain-Einschränkung vorhanden (nur Hostname-Format + Eindeutigkeit) – keine Änderung nötig
 
 ### Schritt 4: Team `vm-admins` – ✅ weitgehend erledigt (Befehle zur Referenz)
 Befehle vorbereitet, **noch nicht ausführen**:

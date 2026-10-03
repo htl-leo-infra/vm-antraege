@@ -78,7 +78,7 @@ Nach der Vorstellung am 02.10.2026. Originaltext:
 
 Umsetzung (noch offen):
 
-- [ ] **DNS-Name:** keine Einschränkung auf `htl-leonding.ac.at`. Derzeit prüft der Workflow die Domain gar nicht (nur Eindeutigkeit), `htl-leonding.ac.at` steht nur im Platzhalter. Mit Michael klären, wo die Prüfung auftritt.
+- [x] **DNS-Name:** keine Einschränkung auf `htl-leonding.ac.at` – bereits erfüllt, keine Änderung nötig. Der Workflow prüft nur auf gültigen Hostnamen und Eindeutigkeit; `htl-leonding.ac.at` steht nur als Beispiel im Platzhalter und in den Leitfäden.
 - [ ] **Betreuende Lehrkraft:** Feld wird GitHub-Username (eventuell mit Prüfung, ob der Account existiert). Die Lehrkraft wird per @-Mention benachrichtigt und gibt als Erste frei.
 - [ ] **Zweistufige Freigabe:** Label `status: freigegeben` wird ersetzt durch `status: betreuer-freigegeben` (zuerst, Lehrkraft per `/freigeben`) und danach `status: av-freigegeben` (Peter Bauer). Erst nach beiden geht es zur IP-Vergabe.
 - [ ] **Security-Checkliste nach Erstellung:** Bei `status: erstellt` bekommt das Issue eine Checkliste (Lynis, Fail2Ban, ClamAV, WAF, SSH-Härtung) zum Abhaken durch die Schüler*innen.
