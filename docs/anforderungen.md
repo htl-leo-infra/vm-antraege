@@ -64,6 +64,32 @@ flowchart LR
 - Freigabe: Peter Bauer · IP-Vergabe: Sysadmin Thomas Himmelbauer (`ghbugfinder`, ab 30.09.2026) · VM anlegen: Andreas Brückner, Michael Wagner.
 - `/ip` akzeptiert Präfix und öffentliche IP (Michaels Test: `/ip 10.9.32.1/24 /public 193.18.22.7/24`).
 
+## Neue Anforderungen (02.10.2026, Mail Michael Wagner)
+
+Nach der Vorstellung am 02.10.2026. Originaltext:
+
+> Es habe sich im Zuge der heutigen Vorstellung noch ein paar Punkte ergeben die noch umgesetzt werden sollen.
+>
+> - Wenn die Domain angegeben wird dann soll die Prüfung nicht auf htl-leonding.ac.at prüfen.
+> - Githubname (eventuell mit Prüfung) des betreuenden Lehrer statt "Name der betreuenden Lehrkraft" Ich weiterer folge soll dann die betreuende Lehrkraft den Antrag prüfen Freigabe der Betreuenden Lehrkraft. Dazu soll ein statt dem Label "freigabe" nun die beiden Lables "AV freigabe" und "Betreuer freigabe".
+>   Der Betreuer soll als erstes Freigeben und dann erst Peter.
+> - Nachdem die VM angelegt ist soll dann noch eine Checkliste für die Security gemacht werden. Lynis/Fail2Ban/ClamAV/WAF/SSH Härtung
+> - Vorgaben bei der Zeit automatisch 1 Jahr. Betreuenden Lehrkraft kann die Zeit verlängern.
+
+Umsetzung (noch offen):
+
+- [ ] **DNS-Name:** keine Einschränkung auf `htl-leonding.ac.at`. Derzeit prüft der Workflow die Domain gar nicht (nur Eindeutigkeit), `htl-leonding.ac.at` steht nur im Platzhalter. Mit Michael klären, wo die Prüfung auftritt.
+- [ ] **Betreuende Lehrkraft:** Feld wird GitHub-Username (eventuell mit Prüfung, ob der Account existiert). Die Lehrkraft wird per @-Mention benachrichtigt und gibt als Erste frei.
+- [ ] **Zweistufige Freigabe:** Label `status: freigegeben` wird ersetzt durch `Betreuer freigabe` (zuerst, Lehrkraft) und danach `AV freigabe` (Peter Bauer). Erst nach beiden geht es zur IP-Vergabe.
+- [ ] **Security-Checkliste nach Erstellung:** Bei `status: erstellt` bekommt das Issue eine Checkliste (Lynis, Fail2Ban, ClamAV, WAF, SSH-Härtung) zum Abhaken durch die Schüler*innen.
+- [ ] **Nutzungsdauer:** Standard automatisch 1 Jahr. Die betreuende Lehrkraft kann verlängern.
+
+Fragen an Michael:
+
+- Darf eine Lehrkraft Labels setzen? Mit Triage-Rolle wären Lehrkräfte im Team `vm-admins` bzw. in einem eigenen Team. Alternative: ein Kommando wie `/freigeben`, das der Workflow nur von der eingetragenen Lehrkraft akzeptiert.
+- Wie verlängert die Lehrkraft (Kommando `/verlaengern`, Label)? Was passiert nach Ablauf (Erinnerung, Löschung)?
+- Das Feld „Nutzungsdauer“ entfällt im Formular oder wird als Info mit 1 Jahr angezeigt?
+
 ## Offene Punkte
 
 - [x] GitHub-Username von Thomas Himmelbauer: `ghbugfinder` (30.09.2026, ins Team eingeladen)
