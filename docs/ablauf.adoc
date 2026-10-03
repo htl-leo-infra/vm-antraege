@@ -366,15 +366,29 @@ danach immer noch. Eine Änderung der Lehrkraft nach der Freigabe meldet der Bot
 == Testen
 
 Tests nie mit echten Personen — vorher die Variablen auf das eigene Konto setzen, danach
-löschen:
+auf die echten Werte *zurücksetzen*:
 
 [source,bash]
 ----
-gh variable set FREIGABE -R htl-leo-infra/vm-antraege --body htl-leonding
-gh variable set VM_ERSTELLUNG -R htl-leo-infra/vm-antraege --body htl-leonding
+R=htl-leo-infra/vm-antraege
+for v in FREIGABE IP_VERGABE VM_ERSTELLUNG; do gh variable set $v -R $R --body htl-leonding; done
 # … Test-Issues durchspielen …
-# Lehrkraft-Schritt: als Antragsteller*in kann man nicht selbst Lehrkraft sein –
-# entweder zweiten Account eintragen oder /freigeben mit Triage (stellvertretend)
-gh variable delete FREIGABE -R htl-leo-infra/vm-antraege
-gh variable delete VM_ERSTELLUNG -R htl-leo-infra/vm-antraege
+gh variable set FREIGABE -R $R --body bauepete
+gh variable set IP_VERGABE -R $R --body ghbugfinder
+gh variable set VM_ERSTELLUNG -R $R --body "Master-Andi MWagnerOE5AOO"
 ----
+
+WARNING: Variablen nicht löschen — die Defaults in den Workflows weichen ab
+(`VM_ERSTELLUNG` in `kommandos.yaml`: andere Reihenfolge).
+
+Lehrkraft-Schritt::
+Als Antragsteller*in kann man nicht selbst Lehrkraft sein. Einen zweiten Account ohne
+Repo-Rechte eintragen (z.B. `ThomasStuetz`) und `/freigeben`, `/verlaengern`, `/ablehnen`
+von dort kommentieren — so wird auch die Berechtigung der Lehrkraft getestet. Notlösung:
+`/freigeben` mit Triage (stellvertretend).
+
+Ablauf-Workflow::
+`gh workflow run ablauf.yaml -R $R` startet die tägliche Prüfung sofort. Achtung: Erstellte
+Anträge ohne Ablaufdatum bekommen dabei eines nachgetragen, mit Erwähnung der
+Antragsteller*in. `läuft ab` / `abgelaufen` lassen sich live nur nach entsprechender
+Wartezeit testen.
