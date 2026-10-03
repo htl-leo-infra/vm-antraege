@@ -61,6 +61,12 @@ Jederzeit vor „erstellt":  /ablehnen <Begründung>  oder Label abgelehnt  ─�
 Nach „erstellt":           30 Tage vor Ablauf ──► läuft ab ──► abgelaufen      /verlaengern [Monate] ──► neues Ablaufdatum
 ----
 
+.Ablauf als Diagramm (Quelle: link:ablauf-diagramm.puml[`ablauf-diagramm.puml`])
+image::ablauf-diagramm.svg["Ablauf eines VM-Antrags als Aktivitätsdiagramm, Farbe = zuständige Rolle"]
+
+TIP: Nach Änderungen am Diagramm das SVG neu erzeugen:
+`plantuml -tsvg docs/ablauf-diagramm.puml` (GitHub rendert PlantUML nicht selbst).
+
 .Kommandos
 [cols="2,2,3",options="header"]
 |===

@@ -1,0 +1,94 @@
+@startuml ablauf-diagramm
+' Ablauf eines VM-Antrags. Farbe = zuständige Rolle (siehe Legende).
+' SVG neu erzeugen: plantuml -tsvg docs/ablauf-diagramm.puml
+
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 12
+skinparam ActivityBorderColor #777777
+skinparam ActivityDiamondBorderColor #777777
+skinparam ArrowColor #555555
+skinparam NoteBackgroundColor #FFFDE7
+skinparam NoteBorderColor #BDB76B
+
+!$S = "#BBDEFB"
+!$BOT = "#E0E0E0"
+!$L = "#FFE0B2"
+!$AV = "#F8BBD0"
+!$IP = "#C8E6C9"
+!$VM = "#E1BEE7"
+
+title VM-Antrag: Ablauf
+
+start
+repeat
+  :<b>Schüler*in</b>
+  Antrag stellen bzw. korrigieren; <<$S>>
+  :<b>Bot</b>
+  Formular prüfen; <<$BOT>>
+repeat while (gültig?) is (nein: Label **ungültig**)
+->ja;
+:<b>Bot</b>
+Label **status: neu**, @Lehrkraft; <<$BOT>>
+
+if (Lehrkraft: Antrag passt?) then (ja)
+  :<b>Lehrkraft</b>
+  **/freigeben**; <<$L>>
+  :<b>Bot</b>
+  Label **status: betreuer-freigegeben**, @AV; <<$BOT>>
+else (nein)
+  :<b>Lehrkraft</b>
+  **/ablehnen** <Begründung>; <<$L>>
+  :<b>Bot</b>
+  Label **abgelehnt**, Issue schließen; <<$BOT>>
+  stop
+endif
+
+if (AV: Antrag passt?) then (ja)
+  :<b>AV</b>
+  Label **status: av-freigegeben**; <<$AV>>
+  note right: darf auch direkt bei **status: neu**
+else (nein)
+  :<b>AV</b>
+  **/ablehnen** <Begründung>; <<$AV>>
+  :<b>Bot</b>
+  Label **abgelehnt**, Issue schließen; <<$BOT>>
+  stop
+endif
+
+:<b>Bot</b>
+@Sysadmin; <<$BOT>>
+:<b>Sysadmin</b>
+**/ip** <intern> [public <öffentlich>]; <<$IP>>
+:<b>Bot</b>
+Label **status: ip-vergeben**
+Zusammenfassung an @VM-Admins; <<$BOT>>
+:<b>VM-Admins</b>
+VM in Proxmox anlegen
+Label **status: erstellt**; <<$VM>>
+:<b>Bot</b>
+Security-Checkliste ans Issue
+Ablaufdatum = heute + 12 Monate; <<$BOT>>
+:<b>Schüler*in</b>
+Checkliste abarbeiten und abhaken; <<$S>>
+
+repeat
+  :<b>Bot</b> (täglich)
+  30 Tage vor Ablauf: Label **läuft ab**
+  Erinnerung an Schüler*in + Lehrkraft; <<$BOT>>
+repeat while (Lehrkraft: noch benötigt?) is (ja: **/verlaengern** [Monate])
+->nein;
+:<b>Bot</b>
+Ablauftag: Label **abgelaufen**; <<$BOT>>
+:<b>VM-Admins</b>
+VM löschen, Issue schließen; <<$VM>>
+stop
+
+legend right
+  |<#BBDEFB>         | Schüler*in |
+  |<#E0E0E0>       | Bot (GitHub Actions) |
+  |<#FFE0B2>         | Lehrkraft |
+  |<#F8BBD0>        | AV (Peter Bauer) |
+  |<#C8E6C9>        | Sysadmin (IP-Vergabe) |
+  |<#E1BEE7>        | VM-Admins |
+endlegend
+@enduml

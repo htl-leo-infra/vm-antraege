@@ -49,6 +49,10 @@ Den aktuellen Stand seht ihr jederzeit am Label eures Issues:
 |`abgelehnt` |Antrag nicht genehmigt
 |===
 
+=== Gesamtablauf
+
+image::docs/ablauf-diagramm.svg["Ablauf eines VM-Antrags als Aktivitätsdiagramm, Farbe = zuständige Rolle"]
+
 [WARNING]
 ====
 Dieses Repository ist *öffentlich*. Alles, was ihr in einem Issue schreibt, kann jede*r lesen.
